@@ -61,10 +61,20 @@ export default function App() {
     setSettingsOpen(false);
   }
 
+  const completedTasks = tasks.filter(t => t.completedAt !== null);
+  const avgCompletionHours = completedTasks.length > 0
+    ? (completedTasks.reduce((sum, t) => sum + (t.completedAt - t.createdAt), 0) / completedTasks.length / 3600000).toFixed(1)
+    : null;
+
   return (
     <div className="app">
       <div className="app-header">
-        <h1 className="app-title">To Do</h1>
+        <div>
+          <h1 className="app-title">To Do</h1>
+          {avgCompletionHours !== null && (
+            <p className="avg-completion">Avg completion: {avgCompletionHours}h</p>
+          )}
+        </div>
         <div className="settings-wrapper" ref={settingsRef}>
           <button className="settings-btn" onClick={openSettings} aria-label="Settings">
             <Settings size={18} />

@@ -105,7 +105,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
           {task.text}
           <span className="task-timestamp">{formatTimestamp(task.createdAt)}</span>
           {task.completedAt && (
-            <span className="task-timestamp"> · done {formatTimestamp(task.completedAt)}</span>
+            <span className="task-timestamp"> · done {formatTimestamp(task.completedAt)} · {(( task.completedAt - task.createdAt) / 3600000).toFixed(1)}h</span>
           )}
         </span>
       )}
