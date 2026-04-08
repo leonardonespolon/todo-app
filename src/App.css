@@ -1,0 +1,345 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+/* ── Layout ── */
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.app-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ── Settings ── */
+.settings-wrapper {
+  position: relative;
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: white;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.settings-btn:hover {
+  color: #1a1a1a;
+  border-color: #ccc;
+}
+
+.settings-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 220px;
+  max-width: calc(100vw - 2rem);
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+}
+
+.settings-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+  color: #444;
+}
+
+.settings-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.settings-input {
+  width: 64px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 5px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.settings-input:focus {
+  border-color: #1a1a1a;
+}
+
+.settings-unit {
+  font-size: 0.8125rem;
+  color: #888;
+}
+
+.settings-save {
+  align-self: flex-end;
+  padding: 0.35rem 0.875rem;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.settings-save:hover {
+  background: #333;
+}
+
+.settings-error {
+  font-size: 0.8125rem;
+  color: #dc2626;
+}
+
+/* ── Add form ── */
+.add-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.add-input {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.add-input:focus {
+  border-color: #1a1a1a;
+}
+
+.add-btn {
+  padding: 0.625rem 1.25rem;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.add-btn:hover {
+  background: #333;
+}
+
+.add-btn:active {
+  background: #000;
+}
+
+/* ── Filters ── */
+.filters {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 1.75rem;
+}
+
+.filter-btn {
+  padding: 0.3125rem 0.875rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 20px;
+  background: white;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-btn:hover {
+  border-color: #999;
+  color: #1a1a1a;
+}
+
+.filter-btn--active {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: white;
+}
+
+/* ── Sections ── */
+.task-section {
+  margin-bottom: 2rem;
+}
+
+.section-heading {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Task item ── */
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5625rem 0.75rem;
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  margin-bottom: 0.3125rem;
+  transition: border-color 0.15s;
+  min-height: 2.5rem;
+}
+
+.task-item:hover {
+  border-color: #ccc;
+}
+
+.task-checkbox {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #1a1a1a;
+}
+
+.task-text {
+  flex: 1;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  word-break: break-word;
+  cursor: text;
+  user-select: none;
+}
+
+.task-text--completed {
+  text-decoration: line-through;
+  color: #aaa;
+  cursor: default;
+}
+
+.task-edit-input {
+  flex: 1;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  line-height: 1.45;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  min-width: 0;
+}
+
+.task-delete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  color: #ccc;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  transition: color 0.15s, opacity 0.15s;
+  padding: 0;
+}
+
+.task-item:hover .task-delete {
+  opacity: 1;
+}
+
+.task-delete:hover {
+  color: #dc2626;
+}
+
+/* ── Timestamp ── */
+.task-timestamp {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #aaa;
+  white-space: nowrap;
+  font-weight: 400;
+}
+
+.task-text--completed .task-timestamp {
+  color: #ccc;
+}
+
+/* ── Completion animation ── */
+@keyframes taskComplete {
+  0%   { transform: scale(1); box-shadow: none; }
+  30%  { transform: scale(1.03); box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.35); }
+  60%  { transform: scale(0.98); }
+  100% { transform: scale(1); box-shadow: none; }
+}
+
+.task-item--completing {
+  animation: taskComplete 0.6s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-item--completing {
+    animation: none;
+  }
+}
+
+/* ── Empty state ── */
+.empty-state {
+  font-size: 0.875rem;
+  color: #bbb;
+  text-align: center;
+  padding: 1.75rem 0;
+}
