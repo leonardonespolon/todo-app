@@ -1,16 +1,38 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { DndContext, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core';
 import TaskItem from './TaskItem';
-import MoveToDropdown from './MoveToDropdown';
 import { getUrgency } from '../utils/getUrgency';
+
+function DraggableTask({ task, children }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
+  const style = {
+    ...(transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : {}),
+    ...(isDragging ? { opacity: 0.5, zIndex: 999 } : {}),
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      {children}
+    </div>
+  );
+}
+
+function DroppableSection({ id, children }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} style={isOver ? { outline: '2px dashed #ccc', borderRadius: 6 } : undefined}>
+      {children}
+    </div>
+  );
+}
 
 const URGENCY_RANK = { red: 2, yellow: 1, null: 0 };
 const COLLAPSE_KEY = 'todo-app-section-collapse';
 
 function loadCollapse() {
   try {
-    return JSON.parse(localStorage.getItem(COLLAPSE_KEY)) ?? { watch: false, later: false };
+    return JSON.parse(localStorage.getItem(COLLAPSE_KEY)) ?? { watch: false, later: false, completed: false };
   } catch {
-    return { watch: false, later: false };
+    return { watch: false, later: false, completed: false };
   }
 }
 
@@ -39,27 +61,16 @@ export default function TaskList({
   urgencySettings,
 }) {
   const { warning, critical } = urgencySettings;
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
   const [newText, setNewText] = useState('');
   const [collapse, setCollapse] = useState(loadCollapse);
-  const [openMoveId, setOpenMoveId] = useState(null);
-  const listRef = useRef(null);
 
   // Persist collapse state.
   useEffect(() => {
     localStorage.setItem(COLLAPSE_KEY, JSON.stringify(collapse));
   }, [collapse]);
-
-  // Close any open move-dropdown on outside click.
-  useEffect(() => {
-    if (!openMoveId) return;
-    function handleClick(e) {
-      if (listRef.current && !listRef.current.contains(e.target)) {
-        setOpenMoveId(null);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [openMoveId]);
 
   function handleAdd(e) {
     e.preventDefault();
@@ -69,6 +80,13 @@ export default function TaskList({
 
   function toggleCollapse(list) {
     setCollapse(prev => ({ ...prev, [list]: !prev[list] }));
+  }
+
+  function handleDragEnd({ active, over }) {
+    if (!over) return;
+    const task = tasks.find(t => t.id === active.id);
+    if (!task || task.listId === over.id) return;
+    onMove(active.id, over.id);
   }
 
   // ─── filtering ────────────────────────────────────────────────────────────
@@ -97,8 +115,8 @@ export default function TaskList({
   const showTodo = filter !== 'today' || visibleTodo.length > 0;
 
   // ─── render helpers ───────────────────────────────────────────────────────
-  function renderItem(task) {
-    return (
+  function renderItem(task, draggable = false) {
+    const inner = (
       <div key={task.id} style={{ position: 'relative' }}>
         <TaskItem
           task={task}
@@ -106,18 +124,15 @@ export default function TaskList({
           onDelete={onDelete}
           onComplete={onComplete}
           onUncomplete={onUncomplete}
-          onMove={onMove ? (listId) => onMove(task.id, listId) : undefined}
-          onOpenMoveDropdown={() => setOpenMoveId(task.id)}
           urgencySettings={urgencySettings}
         />
-        {openMoveId === task.id && (
-          <MoveToDropdown
-            listId={task.listId}
-            onMove={(listId) => { onMove(task.id, listId); setOpenMoveId(null); }}
-            onClose={() => setOpenMoveId(null)}
-          />
-        )}
       </div>
+    );
+    if (!draggable) return inner;
+    return (
+      <DraggableTask key={task.id} task={task}>
+        {inner}
+      </DraggableTask>
     );
   }
 
@@ -142,52 +157,60 @@ export default function TaskList({
   }
 
   return (
-    <div ref={listRef}>
-      {/* ── TODO ── */}
-      {showTodo && (
-        <section className="task-section">
-          <SectionHeader label="Todo" count={visibleTodo.length} collapsible={false} />
-          <form className="add-form add-form--inline" onSubmit={handleAdd}>
-            <input
-              className="add-input"
-              type="text"
-              placeholder="Add a task..."
-              value={newText}
-              onChange={e => setNewText(e.target.value)}
-              autoComplete="off"
-            />
-            <button type="submit" className="add-btn">Add</button>
-          </form>
-          {visibleTodo.length === 0
-            ? <p className="empty-state">No tasks. Add one above.</p>
-            : visibleTodo.map(renderItem)
-          }
-        </section>
-      )}
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div>
+        {/* ── TODO ── */}
+        {showTodo && (
+          <section className="task-section">
+            <SectionHeader label="Todo" count={visibleTodo.length} collapsible={false} />
+            <form className="add-form add-form--inline" onSubmit={handleAdd}>
+              <input
+                className="add-input"
+                type="text"
+                placeholder="Add a task..."
+                value={newText}
+                onChange={e => setNewText(e.target.value)}
+                autoComplete="off"
+              />
+              <button type="submit" className="add-btn">Add</button>
+            </form>
+            <DroppableSection id="todo">
+              {visibleTodo.length === 0
+                ? <p className="empty-state">No tasks. Add one above.</p>
+                : visibleTodo.map(t => renderItem(t, true))
+              }
+            </DroppableSection>
+          </section>
+        )}
 
-      {/* ── WATCH ── */}
-      {visibleWatch.length > 0 && (
-        <section className="task-section">
-          <SectionHeader label="Watch" count={visibleWatch.length} collapsible listKey="watch" />
-          {!collapse.watch && visibleWatch.map(renderItem)}
-        </section>
-      )}
+        {/* ── WATCH ── */}
+        {visibleWatch.length > 0 && (
+          <section className="task-section">
+            <SectionHeader label="Watch" count={visibleWatch.length} collapsible listKey="watch" />
+            <DroppableSection id="watch">
+              {!collapse.watch && visibleWatch.map(t => renderItem(t, true))}
+            </DroppableSection>
+          </section>
+        )}
 
-      {/* ── LATER ── */}
-      {visibleLater.length > 0 && (
-        <section className="task-section">
-          <SectionHeader label="Later" count={visibleLater.length} collapsible listKey="later" />
-          {!collapse.later && visibleLater.map(renderItem)}
-        </section>
-      )}
+        {/* ── LATER ── */}
+        {visibleLater.length > 0 && (
+          <section className="task-section">
+            <SectionHeader label="Later" count={visibleLater.length} collapsible listKey="later" />
+            <DroppableSection id="later">
+              {!collapse.later && visibleLater.map(t => renderItem(t, true))}
+            </DroppableSection>
+          </section>
+        )}
 
-      {/* ── COMPLETED ── */}
-      {visibleCompleted.length > 0 && (
-        <section className="task-section">
-          <SectionHeader label="Completed" count={visibleCompleted.length} collapsible={false} />
-          {visibleCompleted.map(renderItem)}
-        </section>
-      )}
-    </div>
+        {/* ── COMPLETED ── */}
+        {visibleCompleted.length > 0 && (
+          <section className="task-section">
+            <SectionHeader label="Completed" count={visibleCompleted.length} collapsible listKey="completed" />
+            {!collapse.completed && visibleCompleted.map(t => renderItem(t, false))}
+          </section>
+        )}
+      </div>
+    </DndContext>
   );
 }

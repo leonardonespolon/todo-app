@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, ArrowRightLeft } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { getUrgency } from '../utils/getUrgency';
 
 function formatTimestamp(ts) {
@@ -15,7 +15,7 @@ const URGENCY_STYLES = {
   yellow: { background: '#FFF3CD', color: '#856404', borderColor: '#ffeeba' },
 };
 
-export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, onOpenMoveDropdown, urgencySettings }) {
+export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, urgencySettings }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [completing, setCompleting] = useState(false);
@@ -102,8 +102,8 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
       ) : (
         <span
           className={`task-text${isDone ? ' task-text--completed' : ''}`}
-          onClick={isDone ? undefined : startEdit}
-          title={isDone ? undefined : 'Click to edit'}
+          onDoubleClick={isDone ? undefined : startEdit}
+          title={isDone ? undefined : 'Double-click to edit'}
         >
           {task.text}
           <span className="task-timestamp">{formatTimestamp(task.createdAt)}</span>
@@ -111,16 +111,6 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
             <span className="task-timestamp"> · done {formatTimestamp(task.completedAt)} · {(( task.completedAt - task.createdAt) / 3600000).toFixed(1)}h</span>
           )}
         </span>
-      )}
-      {!isDone && onOpenMoveDropdown && (
-        <button
-          className="task-move"
-          onClick={onOpenMoveDropdown}
-          aria-label="Move to list"
-          tabIndex={0}
-        >
-          <ArrowRightLeft size={14} />
-        </button>
       )}
       <button
         className="task-delete"

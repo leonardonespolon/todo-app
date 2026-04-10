@@ -1,6 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import TaskList from '../../src/components/TaskList';
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 const urgencySettings = { warning: 24, critical: 48 };
 const noop = () => {};
@@ -108,6 +112,39 @@ describe('Today filter', () => {
     const fresh = makeTask({ text: 'Done today', completedAt: startOfToday + 1000 });
     renderList([fresh], 'today');
     expect(screen.getByText('Done today')).toBeInTheDocument();
+  });
+});
+
+describe('collapsible Completed section', () => {
+  it('Completed section is expanded by default', () => {
+    const tasks = [makeTask({ text: 'Done task', completedAt: Date.now() })];
+    renderList(tasks);
+    expect(screen.getByText('Done task')).toBeInTheDocument();
+  });
+
+  it('clicking the collapse button hides completed tasks', () => {
+    const tasks = [makeTask({ text: 'Done task', completedAt: Date.now() })];
+    renderList(tasks);
+    const btn = screen.getByLabelText('Collapse Completed');
+    fireEvent.click(btn);
+    expect(screen.queryByText('Done task')).not.toBeInTheDocument();
+  });
+
+  it('clicking collapse button again re-shows completed tasks', () => {
+    const tasks = [makeTask({ text: 'Done task', completedAt: Date.now() })];
+    renderList(tasks);
+    fireEvent.click(screen.getByLabelText('Collapse Completed'));
+    fireEvent.click(screen.getByLabelText('Expand Completed'));
+    expect(screen.getByText('Done task')).toBeInTheDocument();
+  });
+
+  it('persists collapsed state to localStorage', () => {
+    const tasks = [makeTask({ text: 'Done task', completedAt: Date.now() })];
+    renderList(tasks);
+    const btn = screen.getByLabelText('Collapse Completed');
+    fireEvent.click(btn);
+    const saved = JSON.parse(localStorage.getItem('todo-app-section-collapse'));
+    expect(saved.completed).toBe(true);
   });
 });
 
