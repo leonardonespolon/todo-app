@@ -1,19 +1,30 @@
 import { useState, useEffect } from 'react';
 
 // Completion is derived from completedAt: null = active, timestamp = done.
+// List assignment is derived from listId: 'todo' | 'watch' | 'later'.
 
 const STORAGE_KEY = 'todo-app-tasks';
 
 function generateId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch {}
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function migrate(tasks) {
+  // Idempotent: assign listId:'todo' to any task that predates the three-list model.
+  // Safe to run every load — only touches tasks that are missing listId.
+  if (!tasks.some(t => !t.listId)) return tasks;
+  return tasks.map(t => (t.listId ? t : { ...t, listId: 'todo' }));
 }
 
 function loadTasks() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [];
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [];
+    return migrate(raw);
   } catch {
     return [];
   }
@@ -52,6 +63,7 @@ export function useTasks() {
         text: trimmed,
         createdAt: Date.now(),
         completedAt: null,
+        listId: 'todo',
       },
     ]);
   }
@@ -82,5 +94,11 @@ export function useTasks() {
     );
   }
 
-  return { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask };
+  function moveTask(id, listId) {
+    setTasks(prev =>
+      prev.map(t => (t.id === id ? { ...t, listId } : t))
+    );
+  }
+
+  return { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask };
 }

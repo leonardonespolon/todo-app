@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ArrowRightLeft } from 'lucide-react';
 import { getUrgency } from '../utils/getUrgency';
 
 function formatTimestamp(ts) {
@@ -15,7 +15,7 @@ const URGENCY_STYLES = {
   yellow: { background: '#FFF3CD', color: '#856404', borderColor: '#ffeeba' },
 };
 
-export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, urgencySettings }) {
+export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, onOpenMoveDropdown, urgencySettings }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [completing, setCompleting] = useState(false);
@@ -25,7 +25,10 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
 
   const isDone = task.completedAt !== null;
   const { warning, critical } = urgencySettings ?? { warning: 24, critical: 48 };
-  const urgency = isDone ? null : getUrgency(task.createdAt, warning, critical);
+  // Urgency only applies to active tasks in the Todo list.
+  const urgency = (!isDone && task.listId === 'todo')
+    ? getUrgency(task.createdAt, warning, critical)
+    : null;
   const urgencyStyle = urgency ? URGENCY_STYLES[urgency] : {};
 
   function startEdit() {
@@ -108,6 +111,16 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
             <span className="task-timestamp"> · done {formatTimestamp(task.completedAt)} · {(( task.completedAt - task.createdAt) / 3600000).toFixed(1)}h</span>
           )}
         </span>
+      )}
+      {!isDone && onOpenMoveDropdown && (
+        <button
+          className="task-move"
+          onClick={onOpenMoveDropdown}
+          aria-label="Move to list"
+          tabIndex={0}
+        >
+          <ArrowRightLeft size={14} />
+        </button>
       )}
       <button
         className="task-delete"

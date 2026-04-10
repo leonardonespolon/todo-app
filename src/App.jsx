@@ -16,9 +16,8 @@ function loadUrgencySettings() {
 }
 
 export default function App() {
-  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask } = useTasks();
+  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask } = useTasks();
   const [filter, setFilter] = useState('all');
-  const [newText, setNewText] = useState('');
   const [urgencySettings, setUrgencySettings] = useState(loadUrgencySettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState(urgencySettings);
@@ -34,12 +33,6 @@ export default function App() {
     if (settingsOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [settingsOpen]);
-
-  function handleAdd(e) {
-    e.preventDefault();
-    addTask(newText);
-    setNewText('');
-  }
 
   function openSettings() {
     setDraft(urgencySettings);
@@ -115,18 +108,6 @@ export default function App() {
         </div>
       </div>
 
-      <form className="add-form" onSubmit={handleAdd}>
-        <input
-          className="add-input"
-          type="text"
-          placeholder="Add a task..."
-          value={newText}
-          onChange={e => setNewText(e.target.value)}
-          autoComplete="off"
-        />
-        <button type="submit" className="add-btn">Add</button>
-      </form>
-
       <div className="filters">
         <button
           className={`filter-btn${filter === 'all' ? ' filter-btn--active' : ''}`}
@@ -145,10 +126,12 @@ export default function App() {
       <TaskList
         tasks={tasks}
         filter={filter}
+        onAdd={addTask}
         onEdit={editTask}
         onDelete={deleteTask}
         onComplete={completeTask}
         onUncomplete={uncompleteTask}
+        onMove={moveTask}
         urgencySettings={urgencySettings}
       />
     </div>
