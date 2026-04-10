@@ -33,6 +33,13 @@ body {
   letter-spacing: -0.02em;
 }
 
+.streak-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #f97316;
+  margin-top: 0.2rem;
+}
+
 .avg-completion {
   font-size: 0.75rem;
   color: #aaa;

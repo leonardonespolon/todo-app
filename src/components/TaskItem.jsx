@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { getUrgency } from '../utils/getUrgency';
 
 function formatTimestamp(ts) {
@@ -20,6 +21,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
   const [editText, setEditText] = useState(task.text);
   const [completing, setCompleting] = useState(false);
   const completeTimerRef = useRef(null);
+  const checkboxRef = useRef(null);
 
   useEffect(() => () => clearTimeout(completeTimerRef.current), []);
 
@@ -78,6 +80,17 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
       completeTimerRef.current = setTimeout(() => {
         setCompleting(false);
         onComplete(task.id);
+        const rect = checkboxRef.current?.getBoundingClientRect();
+        if (rect) {
+          confetti({
+            particleCount: 80,
+            spread: 65,
+            origin: {
+              x: (rect.left + rect.width / 2) / window.innerWidth,
+              y: (rect.top + rect.height / 2) / window.innerHeight,
+            },
+          });
+        }
       }, 600);
     }
   }
@@ -85,6 +98,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
   return (
     <div className={`task-item${completing ? ' task-item--completing' : ''}`} style={urgencyStyle}>
       <input
+        ref={checkboxRef}
         type="checkbox"
         checked={isDone || completing}
         onChange={handleCheck}

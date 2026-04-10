@@ -59,11 +59,17 @@ export default function App() {
     ? (completedTasks.reduce((sum, t) => sum + (t.completedAt - t.createdAt), 0) / completedTasks.length / 3600000).toFixed(1)
     : null;
 
+  const startOfToday = new Date().setHours(0, 0, 0, 0);
+  const todayCount = completedTasks.filter(t => t.completedAt >= startOfToday).length;
+
   return (
     <div className="app">
       <div className="app-header">
         <div>
           <h1 className="app-title">To Do</h1>
+          {todayCount > 0 && (
+            <p className="streak-count">🔥 {todayCount} task{todayCount !== 1 ? 's' : ''} done today</p>
+          )}
           {avgCompletionHours !== null && (
             <p className="avg-completion">Avg completion: {avgCompletionHours}h</p>
           )}
