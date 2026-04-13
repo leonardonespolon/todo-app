@@ -100,5 +100,9 @@ export function useTasks() {
     );
   }
 
-  return { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask };
+  function resetTasks(newTasks) {
+    setTasks(newTasks);
+  }
+
+  return { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, resetTasks };
 }

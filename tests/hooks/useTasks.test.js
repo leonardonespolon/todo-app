@@ -174,3 +174,31 @@ describe('generateId fallback', () => {
     expect(typeof result.current.tasks[0].id).toBe('string');
   });
 });
+
+// ─── resetTasks ─────────────────────────────────────────────────────────────
+
+describe('resetTasks', () => {
+  it('replaces all tasks with the provided array', () => {
+    const { result } = renderHook(() => useTasks());
+    act(() => result.current.addTask('Old task'));
+    const replacement = [
+      { id: 'r1', text: 'Remote task', createdAt: 9000, completedAt: null, listId: 'watch' },
+    ];
+    act(() => result.current.resetTasks(replacement));
+    expect(result.current.tasks).toHaveLength(1);
+    expect(result.current.tasks[0].id).toBe('r1');
+    expect(result.current.tasks[0].listId).toBe('watch');
+  });
+
+  it('persists the reset tasks to localStorage', () => {
+    const { result } = renderHook(() => useTasks());
+    act(() => result.current.addTask('Old task'));
+    const replacement = [
+      { id: 'r1', text: 'Remote task', createdAt: 9000, completedAt: null, listId: 'later' },
+    ];
+    act(() => result.current.resetTasks(replacement));
+    const saved = JSON.parse(localStorage.getItem('todo-app-tasks'));
+    expect(saved[0].id).toBe('r1');
+    expect(saved[0].listId).toBe('later');
+  });
+});
