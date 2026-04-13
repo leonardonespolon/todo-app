@@ -433,3 +433,94 @@ body {
 .move-dropdown-item:hover {
   background: #f5f5f5;
 }
+
+/* ── Sync status ── */
+.sync-status {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-top: 0.2rem;
+}
+
+.sync-status--error {
+  color: #dc2626;
+}
+
+/* ── Pull button ── */
+.pull-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: white;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.pull-btn:hover {
+  color: #1a1a1a;
+  border-color: #ccc;
+}
+
+/* ── Settings: Gist section ── */
+.settings-divider {
+  border: none;
+  border-top: 1px solid #f0f0f0;
+  margin: 0;
+}
+
+.settings-token-input {
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 5px;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.settings-token-input:focus {
+  border-color: #1a1a1a;
+}
+
+.settings-link {
+  font-size: 0.75rem;
+  color: #888;
+  text-decoration: none;
+}
+
+.settings-link:hover {
+  color: #1a1a1a;
+  text-decoration: underline;
+}
+
+.settings-gist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-gist-badge {
+  font-size: 0.8125rem;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.settings-gist-disconnect {
+  font-size: 0.8125rem;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  text-decoration: underline;
+}
+
+.settings-gist-disconnect:hover {
+  color: #dc2626;
+}
