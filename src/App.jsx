@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, RefreshCw } from 'lucide-react';
 import { useTasks } from './hooks/useTasks';
+import { useGistSync } from './hooks/useGistSync';
 import TaskList from './components/TaskList';
 import './App.css';
 
@@ -16,14 +17,21 @@ function loadUrgencySettings() {
 }
 
 export default function App() {
-  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask } = useTasks();
+  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks();
+  const { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave } = useGistSync();
   const [filter, setFilter] = useState('all');
   const [urgencySettings, setUrgencySettings] = useState(loadUrgencySettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState(urgencySettings);
   const [settingsError, setSettingsError] = useState('');
+  const [tokenInput, setTokenInput] = useState('');
+  const [gistReady, setGistReady] = useState(false);
+  const [syncVisible, setSyncVisible] = useState(false);
   const settingsRef = useRef(null);
+  const syncTimerRef = useRef(null);
+  const justLoadedRef = useRef(false);
 
+  // Close settings panel on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (settingsRef.current && !settingsRef.current.contains(e.target)) {
@@ -33,6 +41,40 @@ export default function App() {
     if (settingsOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [settingsOpen]);
+
+  // Load from Gist on mount; set gistReady when done
+  useEffect(() => {
+    async function init() {
+      if (token) {
+        const remote = await load();
+        if (remote) {
+          justLoadedRef.current = true;
+          resetTasks(remote);
+        }
+      }
+      setGistReady(true);
+    }
+    init();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-save to Gist on task changes (skip the load that just happened)
+  useEffect(() => {
+    if (!gistReady) return;
+    if (justLoadedRef.current) { justLoadedRef.current = false; return; }
+    scheduleSave(tasks);
+  }, [tasks]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync status visibility — "Synced ✓" fades after 3s
+  useEffect(() => {
+    clearTimeout(syncTimerRef.current);
+    if (syncStatus === 'synced') {
+      setSyncVisible(true);
+      syncTimerRef.current = setTimeout(() => setSyncVisible(false), 3000);
+    } else {
+      setSyncVisible(syncStatus !== 'idle');
+    }
+    return () => clearTimeout(syncTimerRef.current);
+  }, [syncStatus]);
 
   function openSettings() {
     setDraft(urgencySettings);
@@ -54,6 +96,37 @@ export default function App() {
     setSettingsOpen(false);
   }
 
+  async function handleConnect() {
+    const trimmed = tokenInput.trim();
+    if (!trimmed) return;
+    setToken(trimmed);
+    setTokenInput('');
+    setGistReady(false);
+    await discoverGist(); // find existing gist on GitHub before loading
+    const remote = await load();
+    if (remote) {
+      justLoadedRef.current = true;
+      resetTasks(remote);
+    }
+    setGistReady(true);
+    setSettingsOpen(false);
+  }
+
+  function handleDisconnect() {
+    setToken('');
+    setSyncVisible(false);
+    setSettingsOpen(false);
+  }
+
+  async function handlePull() {
+    await flushSave(tasks);
+    const remote = await load();
+    if (remote) {
+      justLoadedRef.current = true;
+      resetTasks(remote);
+    }
+  }
+
   const completedTasks = tasks.filter(t => t.completedAt !== null);
   const avgCompletionHours = completedTasks.length > 0
     ? (completedTasks.reduce((sum, t) => sum + (t.completedAt - t.createdAt), 0) / completedTasks.length / 3600000).toFixed(1)
@@ -61,6 +134,15 @@ export default function App() {
 
   const startOfToday = new Date().setHours(0, 0, 0, 0);
   const todayCount = completedTasks.filter(t => t.completedAt >= startOfToday).length;
+
+  const syncLabel = (() => {
+    if (!token || !syncVisible) return null;
+    if (syncStatus === 'loading') return { text: 'Loading from Gist…', error: false };
+    if (syncStatus === 'pending' || syncStatus === 'syncing') return { text: 'Syncing…', error: false };
+    if (syncStatus === 'synced') return { text: 'Synced ✓', error: false };
+    if (syncStatus === 'error') return { text: `Sync failed: ${syncError}`, error: true };
+    return null;
+  })();
 
   return (
     <div className="app">
@@ -73,44 +155,96 @@ export default function App() {
           {avgCompletionHours !== null && (
             <p className="avg-completion">Avg completion: {avgCompletionHours}h</p>
           )}
-        </div>
-        <div className="settings-wrapper" ref={settingsRef}>
-          <button className="settings-btn" onClick={openSettings} aria-label="Settings">
-            <Settings size={18} />
-          </button>
-          {settingsOpen && (
-            <div className="settings-dropdown">
-              <p className="settings-title">Urgency thresholds</p>
-              <label className="settings-label">
-                <span>Yellow warning after</span>
-                <div className="settings-input-row">
-                  <input
-                    type="number"
-                    min="1"
-                    className="settings-input"
-                    value={draft.warning}
-                    onChange={e => { setDraft(d => ({ ...d, warning: e.target.value })); setSettingsError(''); }}
-                  />
-                  <span className="settings-unit">hours</span>
-                </div>
-              </label>
-              <label className="settings-label">
-                <span>Red critical after</span>
-                <div className="settings-input-row">
-                  <input
-                    type="number"
-                    min="1"
-                    className="settings-input"
-                    value={draft.critical}
-                    onChange={e => { setDraft(d => ({ ...d, critical: e.target.value })); setSettingsError(''); }}
-                  />
-                  <span className="settings-unit">hours</span>
-                </div>
-              </label>
-              {settingsError && <p className="settings-error">{settingsError}</p>}
-              <button className="settings-save" onClick={saveSettings}>Save</button>
-            </div>
+          {syncLabel && (
+            <p className={`sync-status${syncLabel.error ? ' sync-status--error' : ''}`}>
+              {syncLabel.text}
+            </p>
           )}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {token && (
+            <button className="pull-btn" onClick={handlePull} aria-label="Pull from Gist">
+              <RefreshCw size={18} />
+            </button>
+          )}
+          <div className="settings-wrapper" ref={settingsRef}>
+            <button className="settings-btn" onClick={openSettings} aria-label="Settings">
+              <Settings size={18} />
+            </button>
+            {settingsOpen && (
+              <div className="settings-dropdown">
+                <p className="settings-title">Urgency thresholds</p>
+                <label className="settings-label">
+                  <span>Yellow warning after</span>
+                  <div className="settings-input-row">
+                    <input
+                      type="number"
+                      min="1"
+                      className="settings-input"
+                      value={draft.warning}
+                      onChange={e => { setDraft(d => ({ ...d, warning: e.target.value })); setSettingsError(''); }}
+                    />
+                    <span className="settings-unit">hours</span>
+                  </div>
+                </label>
+                <label className="settings-label">
+                  <span>Red critical after</span>
+                  <div className="settings-input-row">
+                    <input
+                      type="number"
+                      min="1"
+                      className="settings-input"
+                      value={draft.critical}
+                      onChange={e => { setDraft(d => ({ ...d, critical: e.target.value })); setSettingsError(''); }}
+                    />
+                    <span className="settings-unit">hours</span>
+                  </div>
+                </label>
+                {settingsError && <p className="settings-error">{settingsError}</p>}
+                <button className="settings-save" onClick={saveSettings}>Save</button>
+
+                <hr className="settings-divider" />
+                <p className="settings-title">Gist Sync</p>
+                {token ? (
+                  <div className="settings-gist-row">
+                    <span className="settings-gist-badge">● Connected</span>
+                    <button className="settings-gist-disconnect" onClick={handleDisconnect}>
+                      Disconnect
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <label className="settings-label">
+                      <span>GitHub token</span>
+                      <input
+                        type="password"
+                        className="settings-token-input"
+                        placeholder="ghp_..."
+                        value={tokenInput}
+                        onChange={e => setTokenInput(e.target.value)}
+                        autoComplete="off"
+                      />
+                    </label>
+                    <a
+                      className="settings-link"
+                      href="https://github.com/settings/tokens/new?scopes=gist&description=Todo+App"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Create token (gist scope) ↗
+                    </a>
+                    <button
+                      className="settings-save"
+                      onClick={handleConnect}
+                      disabled={!tokenInput.trim()}
+                    >
+                      Connect
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
