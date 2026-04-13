@@ -17,7 +17,7 @@ A "Wrapped"-style stats summary (inspired by Spotify Wrapped) that surfaces prod
 
 ## Overlay Layout
 
-- **Full-screen modal** with a dark/overlay backdrop, dismissible via close button or clicking outside.
+- **Full-screen modal** with a dark/overlay backdrop, dismissible via close button, clicking outside, or pressing `Escape`.
 - **Period switcher** at the top: `Week | Month | Year` (default: Week).
 - Switching period re-computes and re-renders stats immediately (no async, derived from in-memory task array).
 - **Single scrollable column** of stat rows below the switcher.
@@ -26,6 +26,8 @@ A "Wrapped"-style stats summary (inspired by Spotify Wrapped) that surfaces prod
 ---
 
 ## Stats
+
+**Period windows (rolling):** Week = last 7 days, Month = last 30 days, Year = last 365 days. Window is relative to `Date.now()` at render time.
 
 All stats are derived from completed tasks within the selected period window.
 
@@ -45,6 +47,8 @@ If a period has no completed tasks, show a friendly empty state: "No completed t
 
 ## Personality Label
 
+Only shown when ≥ 3 tasks were completed in the period. Below that threshold, show "Not enough data yet." in place of the label.
+
 Derived from stats using a priority-ordered set of rules. First matching rule wins.
 
 | Rule | Label | Description |
@@ -61,16 +65,19 @@ Derived from stats using a priority-ordered set of rules. First matching rule wi
 
 ## Architecture
 
-### New utility: `src/utils/computeWrapped.js`
+### New utility: `src/utils/computeWrapped.js` + `tests/utils/computeWrapped.test.js`
 
 ```
 computeWrapped(tasks: Task[], period: 'week' | 'month' | 'year') → WrappedStats
 ```
 
 - Pure function, no side effects.
+- Period windows are rolling: Week = last 7 days, Month = last 30 days, Year = last 365 days.
 - Filters tasks by `completedAt` within the period window.
-- Returns all stats + personality label as a plain object.
-- Independently testable.
+- Returns all stats + personality label as a plain object. Returns `null` stats for empty periods.
+- Tiebreaker for most productive hour/day: earliest value wins.
+- Must have a corresponding test file: `tests/utils/computeWrapped.test.js`
+  - Tests: period window filtering, each stat (happy path + edge cases), streak non-consecutive gap, completion rate with zero active tasks, personality priority order, minimum threshold (< 3 completions → no label), empty period.
 
 ### New component: `src/components/WrappedModal.jsx`
 
