@@ -28,6 +28,7 @@ export function useGistSync() {
   const gistIdRef = useRef(localStorage.getItem(GIST_ID_KEY) ?? '');
   const debounceRef = useRef(null);
   const pendingTasksRef = useRef(null);
+  const isSavingRef = useRef(false);
 
   function setToken(t) {
     const v = t.trim();
@@ -43,25 +44,31 @@ export function useGistSync() {
   }
 
   async function doSave(tasks) {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
     const tok = tokenRef.current;
-    if (!gistIdRef.current) {
-      const data = await ghFetch(tok, '/gists', {
-        method: 'POST',
-        body: JSON.stringify({
-          description: 'Todo App Tasks',
-          public: false,
-          files: { [FILENAME]: { content: JSON.stringify(tasks) } },
-        }),
-      });
-      gistIdRef.current = data.id;
-      localStorage.setItem(GIST_ID_KEY, data.id);
-    } else {
-      await ghFetch(tok, `/gists/${gistIdRef.current}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          files: { [FILENAME]: { content: JSON.stringify(tasks) } },
-        }),
-      });
+    try {
+      if (!gistIdRef.current) {
+        const data = await ghFetch(tok, '/gists', {
+          method: 'POST',
+          body: JSON.stringify({
+            description: 'Todo App Tasks',
+            public: false,
+            files: { [FILENAME]: { content: JSON.stringify(tasks) } },
+          }),
+        });
+        gistIdRef.current = data.id;
+        localStorage.setItem(GIST_ID_KEY, data.id);
+      } else {
+        await ghFetch(tok, `/gists/${gistIdRef.current}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            files: { [FILENAME]: { content: JSON.stringify(tasks) } },
+          }),
+        });
+      }
+    } finally {
+      isSavingRef.current = false;
     }
   }
 
@@ -100,6 +107,9 @@ export function useGistSync() {
     }
   }
 
+  // NOTE: functions are not wrapped in useCallback intentionally — all mutable state
+  // goes through refs (tokenRef, gistIdRef), so there are no stale closure issues.
+  // App.jsx consumers use eslint-disable-line on deps arrays where needed.
   function scheduleSave(tasks) {
     if (!tokenRef.current) return;
     pendingTasksRef.current = tasks;

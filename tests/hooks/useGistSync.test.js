@@ -143,12 +143,12 @@ describe('discoverGist', () => {
 // ─── scheduleSave ────────────────────────────────────────────────────────────
 
 describe('scheduleSave', () => {
-  it('does nothing when no token', () => {
+  it('does nothing when no token', async () => {
     vi.useFakeTimers();
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const { result } = renderHook(() => useGistSync());
     act(() => result.current.scheduleSave([{ id: '1', text: 'Task' }]));
-    vi.advanceTimersByTime(2000);
+    await act(async () => { vi.advanceTimersByTime(2000); });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
