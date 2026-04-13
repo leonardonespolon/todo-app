@@ -41,14 +41,16 @@ describe('section visibility', () => {
     expect(screen.getByText('Todo')).toBeInTheDocument();
   });
 
-  it('hides Watch section when no watch tasks', () => {
+  it('shows Watch section with empty state when no watch tasks', () => {
     renderList([makeTask({ listId: 'todo' })]);
-    expect(screen.queryByText('Watch')).not.toBeInTheDocument();
+    expect(screen.getByText('Watch')).toBeInTheDocument();
+    expect(screen.getByText('Move tasks here to keep an eye on them.')).toBeInTheDocument();
   });
 
-  it('hides Later section when no later tasks', () => {
+  it('shows Later section with empty state when no later tasks', () => {
     renderList([makeTask({ listId: 'todo' })]);
-    expect(screen.queryByText('Later')).not.toBeInTheDocument();
+    expect(screen.getByText('Later')).toBeInTheDocument();
+    expect(screen.getByText('Move tasks here to tackle another time.')).toBeInTheDocument();
   });
 
   it('shows Watch section when there are watch tasks', () => {
