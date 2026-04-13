@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings, RefreshCw } from 'lucide-react';
+import { Settings, RefreshCw, BarChart2 } from 'lucide-react';
 import { useTasks } from './hooks/useTasks';
 import { useGistSync } from './hooks/useGistSync';
 import TaskList from './components/TaskList';
 import './App.css';
+import WrappedModal from './components/WrappedModal';
 
 const DEFAULT_URGENCY = { warning: 24, critical: 48 };
 
@@ -27,6 +28,7 @@ export default function App() {
   const [tokenInput, setTokenInput] = useState('');
   const [gistReady, setGistReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [wrappedOpen, setWrappedOpen] = useState(false);
   const [syncVisible, setSyncVisible] = useState(false);
   const settingsRef = useRef(null);
   const syncTimerRef = useRef(null);
@@ -165,6 +167,15 @@ export default function App() {
           )}
         </div>
         <div className="header-actions">
+          {completedTasks.length > 0 && (
+            <button
+              className="wrapped-btn"
+              onClick={() => setWrappedOpen(true)}
+              aria-label="View your Wrapped"
+            >
+              <BarChart2 size={18} />
+            </button>
+          )}
           {token && (
             <button
               className="pull-btn"
@@ -282,6 +293,9 @@ export default function App() {
         onMove={moveTask}
         urgencySettings={urgencySettings}
       />
+      {wrappedOpen && (
+        <WrappedModal tasks={tasks} onClose={() => setWrappedOpen(false)} />
+      )}
     </div>
   );
 }
