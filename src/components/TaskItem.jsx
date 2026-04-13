@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getUrgency } from '../utils/getUrgency';
+import MoveToDropdown from './MoveToDropdown';
 
 function formatTimestamp(ts) {
   const d = new Date(ts);
@@ -16,14 +17,25 @@ const URGENCY_STYLES = {
   yellow: { background: '#FFF3CD', color: '#856404', borderColor: '#ffeeba' },
 };
 
-export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, urgencySettings }) {
+export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, urgencySettings }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [completing, setCompleting] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
   const completeTimerRef = useRef(null);
   const checkboxRef = useRef(null);
+  const moveRef = useRef(null);
 
   useEffect(() => () => clearTimeout(completeTimerRef.current), []);
+
+  useEffect(() => {
+    if (!moveOpen) return;
+    function handleClickOutside(e) {
+      if (moveRef.current && !moveRef.current.contains(e.target)) setMoveOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [moveOpen]);
 
   const isDone = task.completedAt !== null;
   const { warning, critical } = urgencySettings ?? { warning: 24, critical: 48 };
@@ -125,6 +137,25 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
             <span className="task-timestamp"> · done {formatTimestamp(task.completedAt)} · {(( task.completedAt - task.createdAt) / 3600000).toFixed(1)}h</span>
           )}
         </span>
+      )}
+      {!isDone && onMove && (
+        <div ref={moveRef} style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            className="task-move"
+            onClick={() => setMoveOpen(o => !o)}
+            aria-label="Move task"
+            tabIndex={0}
+          >
+            <ArrowRight size={15} />
+          </button>
+          {moveOpen && (
+            <MoveToDropdown
+              listId={task.listId}
+              onMove={target => { onMove(task.id, target); setMoveOpen(false); }}
+              onClose={() => setMoveOpen(false)}
+            />
+          )}
+        </div>
       )}
       <button
         className="task-delete"

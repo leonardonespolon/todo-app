@@ -124,6 +124,7 @@ export default function TaskList({
           onDelete={onDelete}
           onComplete={onComplete}
           onUncomplete={onUncomplete}
+          onMove={onMove}
           urgencySettings={urgencySettings}
         />
       </div>
@@ -184,24 +185,28 @@ export default function TaskList({
         )}
 
         {/* ── WATCH ── */}
-        {visibleWatch.length > 0 && (
-          <section className="task-section">
-            <SectionHeader label="Watch" count={visibleWatch.length} collapsible listKey="watch" />
-            <DroppableSection id="watch">
-              {!collapse.watch && visibleWatch.map(t => renderItem(t, true))}
-            </DroppableSection>
-          </section>
-        )}
+        <section className="task-section">
+          <SectionHeader label="Watch" count={visibleWatch.length} collapsible listKey="watch" />
+          <DroppableSection id="watch">
+            {!collapse.watch && (
+              visibleWatch.length === 0
+                ? <p className="empty-state">Move tasks here to keep an eye on them.</p>
+                : visibleWatch.map(t => renderItem(t, true))
+            )}
+          </DroppableSection>
+        </section>
 
         {/* ── LATER ── */}
-        {visibleLater.length > 0 && (
-          <section className="task-section">
-            <SectionHeader label="Later" count={visibleLater.length} collapsible listKey="later" />
-            <DroppableSection id="later">
-              {!collapse.later && visibleLater.map(t => renderItem(t, true))}
-            </DroppableSection>
-          </section>
-        )}
+        <section className="task-section">
+          <SectionHeader label="Later" count={visibleLater.length} collapsible listKey="later" />
+          <DroppableSection id="later">
+            {!collapse.later && (
+              visibleLater.length === 0
+                ? <p className="empty-state">Move tasks here to tackle another time.</p>
+                : visibleLater.map(t => renderItem(t, true))
+            )}
+          </DroppableSection>
+        </section>
 
         {/* ── COMPLETED ── */}
         {visibleCompleted.length > 0 && (
