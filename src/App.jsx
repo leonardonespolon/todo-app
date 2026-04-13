@@ -55,14 +55,14 @@ export default function App() {
       setGistReady(true);
     }
     init();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount-only init; token/load/resetTasks are stable
 
   // Auto-save to Gist on task changes (skip the load that just happened)
   useEffect(() => {
     if (!gistReady) return;
     if (justLoadedRef.current) { justLoadedRef.current = false; return; }
     scheduleSave(tasks);
-  }, [tasks]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tasks]); // eslint-disable-line react-hooks/exhaustive-deps -- gistReady/scheduleSave intentionally omitted; tasks is the sole trigger
 
   // Sync status visibility — "Synced ✓" fades after 3s
   useEffect(() => {
@@ -161,14 +161,14 @@ export default function App() {
             </p>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div className="header-actions">
           {token && (
             <button className="pull-btn" onClick={handlePull} aria-label="Pull from Gist">
               <RefreshCw size={18} />
             </button>
           )}
           <div className="settings-wrapper" ref={settingsRef}>
-            <button className="settings-btn" onClick={openSettings} aria-label="Settings">
+            <button className="settings-btn" onClick={openSettings} aria-label="Settings" aria-expanded={settingsOpen}>
               <Settings size={18} />
             </button>
             {settingsOpen && (

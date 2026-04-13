@@ -524,3 +524,10 @@ body {
 .settings-gist-disconnect:hover {
   color: #dc2626;
 }
+
+/* ── Header actions ── */
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
