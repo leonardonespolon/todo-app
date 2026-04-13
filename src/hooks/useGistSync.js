@@ -30,6 +30,12 @@ export function useGistSync() {
   const pendingTasksRef = useRef(null);
   const isSavingRef = useRef(false);
 
+  async function waitForSaveIdle() {
+    while (isSavingRef.current) {
+      await new Promise(r => setTimeout(r, 50));
+    }
+  }
+
   function setToken(t) {
     const v = t.trim();
     tokenRef.current = v;
@@ -131,6 +137,7 @@ export function useGistSync() {
   async function flushSave(tasks) {
     if (!tokenRef.current) return;
     clearTimeout(debounceRef.current);
+    await waitForSaveIdle(); // wait for any in-flight save to complete first
     setSyncStatus('syncing');
     setSyncError('');
     try {

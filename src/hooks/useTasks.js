@@ -101,7 +101,7 @@ export function useTasks() {
   }
 
   function resetTasks(newTasks) {
-    setTasks(newTasks);
+    setTasks(migrate(newTasks));
   }
 
   return { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, resetTasks };

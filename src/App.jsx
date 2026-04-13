@@ -26,6 +26,7 @@ export default function App() {
   const [settingsError, setSettingsError] = useState('');
   const [tokenInput, setTokenInput] = useState('');
   const [gistReady, setGistReady] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [syncVisible, setSyncVisible] = useState(false);
   const settingsRef = useRef(null);
   const syncTimerRef = useRef(null);
@@ -99,10 +100,11 @@ export default function App() {
   async function handleConnect() {
     const trimmed = tokenInput.trim();
     if (!trimmed) return;
+    setConnecting(true);
     setToken(trimmed);
     setTokenInput('');
     setGistReady(false);
-    await discoverGist(); // find existing gist on GitHub before loading
+    await discoverGist();
     const remote = await load();
     if (remote) {
       justLoadedRef.current = true;
@@ -110,6 +112,7 @@ export default function App() {
     }
     setGistReady(true);
     setSettingsOpen(false);
+    setConnecting(false);
   }
 
   function handleDisconnect() {
@@ -163,7 +166,12 @@ export default function App() {
         </div>
         <div className="header-actions">
           {token && (
-            <button className="pull-btn" onClick={handlePull} aria-label="Pull from Gist">
+            <button
+              className="pull-btn"
+              onClick={handlePull}
+              aria-label="Pull from Gist"
+              disabled={syncStatus === 'loading' || syncStatus === 'syncing'}
+            >
               <RefreshCw size={18} />
             </button>
           )}
@@ -236,9 +244,9 @@ export default function App() {
                     <button
                       className="settings-save"
                       onClick={handleConnect}
-                      disabled={!tokenInput.trim()}
+                      disabled={!tokenInput.trim() || connecting}
                     >
-                      Connect
+                      {connecting ? 'Connecting…' : 'Connect'}
                     </button>
                   </>
                 )}
