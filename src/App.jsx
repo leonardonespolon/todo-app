@@ -124,7 +124,7 @@ export default function App() {
   }
 
   async function handlePull() {
-    await flushSave(tasks);
+    await discoverGist();
     const remote = await load();
     if (remote) {
       justLoadedRef.current = true;
