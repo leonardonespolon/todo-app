@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Trash2, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getUrgency } from '../utils/getUrgency';
-import { playPewPew } from '../utils/playPewPew';
+import { playExplosion } from '../utils/playExplosion';
 import MoveToDropdown from './MoveToDropdown';
 
 function formatTimestamp(ts) {
@@ -89,7 +89,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
       onUncomplete(task.id);
     } else {
       clearTimeout(completeTimerRef.current);
-      playPewPew();
+      playExplosion();
       setCompleting(true);
       completeTimerRef.current = setTimeout(() => {
         setCompleting(false);
