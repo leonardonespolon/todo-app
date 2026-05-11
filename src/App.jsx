@@ -292,6 +292,7 @@ export default function App() {
         onUncomplete={uncompleteTask}
         onMove={moveTask}
         urgencySettings={urgencySettings}
+        todayCount={todayCount}
       />
       {wrappedOpen && (
         <WrappedModal tasks={tasks} onClose={() => setWrappedOpen(false)} />

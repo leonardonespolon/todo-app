@@ -19,7 +19,7 @@ const URGENCY_STYLES = {
   yellow: { background: '#FFF3CD', color: '#856404', borderColor: '#ffeeba' },
 };
 
-export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, urgencySettings }) {
+export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, urgencySettings, todayCount }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [completing, setCompleting] = useState(false);
@@ -90,7 +90,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
       onUncomplete(task.id);
     } else {
       clearTimeout(completeTimerRef.current);
-      playExplosion();
+      playExplosion(todayCount + 1);
       setCompleting(true);
       completeTimerRef.current = setTimeout(() => {
         setCompleting(false);
