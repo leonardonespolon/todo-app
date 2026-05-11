@@ -96,14 +96,11 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
         onComplete(task.id);
         const rect = checkboxRef.current?.getBoundingClientRect();
         if (rect) {
-          confetti({
-            particleCount: 80,
-            spread: 65,
-            origin: {
-              x: (rect.left + rect.width / 2) / window.innerWidth,
-              y: (rect.top + rect.height / 2) / window.innerHeight,
-            },
-          });
+          const x = (rect.left + rect.width / 2) / window.innerWidth;
+          const y = (rect.top + rect.height / 2) / window.innerHeight;
+          confetti({ particleCount: 160, spread: 90, origin: { x, y } });
+          confetti({ particleCount: 100, spread: 70, angle: 60, origin: { x: 0, y: 0.65 } });
+          confetti({ particleCount: 100, spread: 70, angle: 120, origin: { x: 1, y: 0.65 } });
         }
       }, 600);
     }
