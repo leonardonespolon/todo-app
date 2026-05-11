@@ -3,6 +3,7 @@ import { Trash2, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getUrgency } from '../utils/getUrgency';
 import { playExplosion } from '../utils/playExplosion';
+import deathSoundUrl from '../assets/sounds/super-mario-death-sound-sound-effect.mp3';
 import MoveToDropdown from './MoveToDropdown';
 
 function formatTimestamp(ts) {
@@ -159,7 +160,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
       <button
         className="task-delete"
         data-action="delete"
-        onClick={() => onDelete(task.id)}
+        onClick={() => { new Audio(deathSoundUrl).play().catch(() => {}); onDelete(task.id); }}
         aria-label="Delete task"
         tabIndex={0}
       >
