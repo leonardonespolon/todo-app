@@ -59,6 +59,7 @@ export default function TaskList({
   onUncomplete,
   onMove,
   urgencySettings,
+  todayCount,
 }) {
   const { warning, critical } = urgencySettings;
   const sensors = useSensors(
@@ -126,6 +127,7 @@ export default function TaskList({
           onUncomplete={onUncomplete}
           onMove={onMove}
           urgencySettings={urgencySettings}
+          todayCount={todayCount}
         />
       </div>
     );
