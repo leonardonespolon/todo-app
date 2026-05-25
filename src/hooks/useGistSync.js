@@ -55,6 +55,9 @@ export function useGistSync() {
     const tok = tokenRef.current;
     try {
       if (!gistIdRef.current) {
+        await discoverGist();
+      }
+      if (!gistIdRef.current) {
         const data = await ghFetch(tok, '/gists', {
           method: 'POST',
           body: JSON.stringify({

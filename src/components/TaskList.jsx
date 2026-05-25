@@ -25,6 +25,137 @@ function DroppableSection({ id, children }) {
   );
 }
 
+// Defined outside TaskList so React doesn't remount it on every parent render.
+function ProjectGroup({ projectId, label, tasks, collapsed, onToggleCollapse, onAdd, onRename, onDelete, showHeader, renderItem }) {
+  const [newText, setNewText] = useState('');
+  const [renaming, setRenaming] = useState(false);
+  const [renameText, setRenameText] = useState('');
+
+  function handleAdd(e) {
+    e.preventDefault();
+    if (onAdd) onAdd(newText, projectId);
+    setNewText('');
+  }
+
+  function startRename() {
+    setRenameText(label);
+    setRenaming(true);
+  }
+
+  function commitRename() {
+    if (renameText.trim()) onRename(renameText.trim());
+    setRenaming(false);
+  }
+
+  return (
+    <div className="project-group">
+      {showHeader && (
+        <div className="project-group-header">
+          <div className="project-group-left">
+            {renaming ? (
+              <input
+                className="project-name-input"
+                value={renameText}
+                onChange={e => setRenameText(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Escape') setRenaming(false);
+                }}
+                autoFocus
+              />
+            ) : (
+              <>
+                <span
+                  className="project-group-name"
+                  onDoubleClick={onRename ? startRename : undefined}
+                  title={onRename ? 'Double-click to rename' : undefined}
+                >
+                  {label}
+                </span>
+                {tasks.length > 0 && <span className="section-count">{tasks.length}</span>}
+              </>
+            )}
+          </div>
+          {!renaming && (
+            <div className="project-group-controls">
+              {onDelete && (
+                <button
+                  className="project-delete-btn"
+                  onClick={onDelete}
+                  aria-label={`Delete ${label}`}
+                >
+                  ×
+                </button>
+              )}
+              <button
+                className="section-collapse-btn"
+                onClick={onToggleCollapse}
+                aria-label={collapsed ? `Expand ${label}` : `Collapse ${label}`}
+              >
+                {collapsed ? '▸' : '▾'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {!collapsed && (
+        <>
+          <form className="add-form add-form--inline" onSubmit={handleAdd}>
+            <input
+              className="add-input"
+              type="text"
+              placeholder="Add a task..."
+              value={newText}
+              onChange={e => setNewText(e.target.value)}
+              autoComplete="off"
+            />
+            <button type="submit" className="add-btn">Add</button>
+          </form>
+          {tasks.length === 0
+            ? <p className="empty-state">{projectId === null ? 'No tasks. Add one above.' : 'No tasks in this project.'}</p>
+            : tasks.map(t => renderItem(t, true))
+          }
+        </>
+      )}
+    </div>
+  );
+}
+
+function NewProjectRow({ onAdd }) {
+  const [adding, setAdding] = useState(false);
+  const [text, setText] = useState('');
+
+  if (!adding) {
+    return (
+      <button className="new-project-btn" onClick={() => setAdding(true)}>
+        + New project
+      </button>
+    );
+  }
+
+  return (
+    <form
+      className="new-project-form"
+      onSubmit={e => {
+        e.preventDefault();
+        if (text.trim()) { onAdd(text); setText(''); }
+        setAdding(false);
+      }}
+    >
+      <input
+        className="new-project-input"
+        value={text}
+        onChange={e => setText(e.target.value)}
+        placeholder="Project name..."
+        autoFocus
+        onBlur={() => { setAdding(false); setText(''); }}
+        onKeyDown={e => { if (e.key === 'Escape') { setAdding(false); setText(''); } }}
+      />
+    </form>
+  );
+}
+
 const URGENCY_RANK = { red: 2, yellow: 1, null: 0 };
 const COLLAPSE_KEY = 'todo-app-section-collapse';
 
@@ -58,28 +189,26 @@ export default function TaskList({
   onComplete,
   onUncomplete,
   onMove,
+  onSetProject,
   urgencySettings,
+  todayCount,
+  projects,
+  onAddProject,
+  onRenameProject,
+  onDeleteProject,
 }) {
   const { warning, critical } = urgencySettings;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
-  const [newText, setNewText] = useState('');
   const [collapse, setCollapse] = useState(loadCollapse);
 
-  // Persist collapse state.
   useEffect(() => {
     localStorage.setItem(COLLAPSE_KEY, JSON.stringify(collapse));
   }, [collapse]);
 
-  function handleAdd(e) {
-    e.preventDefault();
-    if (onAdd) onAdd(newText);
-    setNewText('');
-  }
-
-  function toggleCollapse(list) {
-    setCollapse(prev => ({ ...prev, [list]: !prev[list] }));
+  function toggleCollapse(key) {
+    setCollapse(prev => ({ ...prev, [key]: !prev[key] }));
   }
 
   function handleDragEnd({ active, over }) {
@@ -95,24 +224,35 @@ export default function TaskList({
   const active = tasks.filter(t => t.completedAt === null);
   const completed = tasks.filter(t => t.completedAt !== null);
 
-  // Today filter: scoped to Todo and Completed only; Watch/Later always show all.
   const todoTasks = active.filter(t => t.listId === 'todo');
   const watchTasks = active.filter(t => t.listId === 'watch');
   const laterTasks = active.filter(t => t.listId === 'later');
 
-  const visibleTodo = filter === 'today'
-    ? sortByUrgency(todoTasks.filter(t => t.createdAt >= startOfToday), warning, critical)
-    : sortByUrgency(todoTasks, warning, critical);
+  // Group todo tasks by project
+  const inboxTasks = todoTasks.filter(t => !t.projectId);
+  const projectTaskMap = {};
+  for (const p of projects) {
+    projectTaskMap[p.id] = todoTasks.filter(t => t.projectId === p.id);
+  }
 
-  const visibleWatch = sortByCreated(watchTasks); // always unfiltered
-  const visibleLater = sortByCreated(laterTasks); // always unfiltered
+  // Apply today filter and sort within each group
+  function filterAndSort(list) {
+    const filtered = filter === 'today' ? list.filter(t => t.createdAt >= startOfToday) : list;
+    return sortByUrgency(filtered, warning, critical);
+  }
+
+  const sortedInbox = filterAndSort(inboxTasks);
+  const sortedProjects = projects.map(p => ({ ...p, tasks: filterAndSort(projectTaskMap[p.id] ?? []) }));
+
+  const visibleWatch = sortByCreated(watchTasks);
+  const visibleLater = sortByCreated(laterTasks);
 
   const visibleCompleted = filter === 'today'
     ? [...completed.filter(t => t.completedAt >= startOfToday)].sort((a, b) => b.completedAt - a.completedAt)
     : [...completed].sort((a, b) => b.completedAt - a.completedAt);
 
-  // In Today view, hide Todo section when empty (unlike All view where it always shows).
-  const showTodo = filter !== 'today' || visibleTodo.length > 0;
+  const totalTodo = sortedInbox.length + sortedProjects.reduce((s, p) => s + p.tasks.length, 0);
+  const showTodo = filter !== 'today' || totalTodo > 0;
 
   // ─── render helpers ───────────────────────────────────────────────────────
   function renderItem(task, draggable = false) {
@@ -125,7 +265,10 @@ export default function TaskList({
           onComplete={onComplete}
           onUncomplete={onUncomplete}
           onMove={onMove}
+          onSetProject={onSetProject}
           urgencySettings={urgencySettings}
+          todayCount={todayCount}
+          projects={projects}
         />
       </div>
     );
@@ -163,24 +306,36 @@ export default function TaskList({
         {/* ── TODO ── */}
         {showTodo && (
           <section className="task-section">
-            <SectionHeader label="Todo" count={visibleTodo.length} collapsible={false} />
-            <form className="add-form add-form--inline" onSubmit={handleAdd}>
-              <input
-                className="add-input"
-                type="text"
-                placeholder="Add a task..."
-                value={newText}
-                onChange={e => setNewText(e.target.value)}
-                autoComplete="off"
-              />
-              <button type="submit" className="add-btn">Add</button>
-            </form>
+            <SectionHeader label="Todo" count={totalTodo} collapsible={false} />
             <DroppableSection id="todo">
-              {visibleTodo.length === 0
-                ? <p className="empty-state">No tasks. Add one above.</p>
-                : visibleTodo.map(t => renderItem(t, true))
-              }
+              <ProjectGroup
+                key="inbox"
+                projectId={null}
+                label="Inbox"
+                tasks={sortedInbox}
+                collapsed={!!collapse.inbox}
+                onToggleCollapse={() => toggleCollapse('inbox')}
+                onAdd={onAdd}
+                showHeader={projects.length > 0}
+                renderItem={renderItem}
+              />
+              {sortedProjects.map(project => (
+                <ProjectGroup
+                  key={project.id}
+                  projectId={project.id}
+                  label={project.name}
+                  tasks={project.tasks}
+                  collapsed={!!collapse[`project-${project.id}`]}
+                  onToggleCollapse={() => toggleCollapse(`project-${project.id}`)}
+                  onAdd={onAdd}
+                  onRename={name => onRenameProject(project.id, name)}
+                  onDelete={() => onDeleteProject(project.id)}
+                  showHeader={true}
+                  renderItem={renderItem}
+                />
+              ))}
             </DroppableSection>
+            <NewProjectRow onAdd={onAddProject} />
           </section>
         )}
 

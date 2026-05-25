@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Trash2, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getUrgency } from '../utils/getUrgency';
+import { playExplosion } from '../utils/playExplosion';
+import deathSoundUrl from '../assets/sounds/super-mario-death-sound-sound-effect.mp3';
 import MoveToDropdown from './MoveToDropdown';
 
 function formatTimestamp(ts) {
@@ -17,7 +19,7 @@ const URGENCY_STYLES = {
   yellow: { background: '#FFF3CD', color: '#856404', borderColor: '#ffeeba' },
 };
 
-export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, urgencySettings }) {
+export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, onSetProject, urgencySettings, todayCount, projects }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [completing, setCompleting] = useState(false);
@@ -88,20 +90,18 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
       onUncomplete(task.id);
     } else {
       clearTimeout(completeTimerRef.current);
+      playExplosion(todayCount + 1);
       setCompleting(true);
       completeTimerRef.current = setTimeout(() => {
         setCompleting(false);
         onComplete(task.id);
         const rect = checkboxRef.current?.getBoundingClientRect();
         if (rect) {
-          confetti({
-            particleCount: 80,
-            spread: 65,
-            origin: {
-              x: (rect.left + rect.width / 2) / window.innerWidth,
-              y: (rect.top + rect.height / 2) / window.innerHeight,
-            },
-          });
+          const x = (rect.left + rect.width / 2) / window.innerWidth;
+          const y = (rect.top + rect.height / 2) / window.innerHeight;
+          confetti({ particleCount: 160, spread: 90, origin: { x, y } });
+          confetti({ particleCount: 100, spread: 70, angle: 60, origin: { x: 0, y: 0.65 } });
+          confetti({ particleCount: 100, spread: 70, angle: 120, origin: { x: 1, y: 0.65 } });
         }
       }, 600);
     }
@@ -151,7 +151,10 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
           {moveOpen && (
             <MoveToDropdown
               listId={task.listId}
+              projectId={task.projectId}
+              projects={projects}
               onMove={target => { onMove(task.id, target); setMoveOpen(false); }}
+              onMoveToProject={projectId => { onSetProject(task.id, projectId); setMoveOpen(false); }}
               onClose={() => setMoveOpen(false)}
             />
           )}
@@ -160,7 +163,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
       <button
         className="task-delete"
         data-action="delete"
-        onClick={() => onDelete(task.id)}
+        onClick={() => { new Audio(deathSoundUrl).play().catch(() => {}); onDelete(task.id); }}
         aria-label="Delete task"
         tabIndex={0}
       >

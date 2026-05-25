@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings, RefreshCw, BarChart2 } from 'lucide-react';
+import { Settings, RefreshCw } from 'lucide-react';
 import { useTasks } from './hooks/useTasks';
+import { useProjects } from './hooks/useProjects';
 import { useGistSync } from './hooks/useGistSync';
 import TaskList from './components/TaskList';
 import './App.css';
-import WrappedModal from './components/WrappedModal';
 
 const DEFAULT_URGENCY = { warning: 24, critical: 48 };
 
@@ -18,7 +18,8 @@ function loadUrgencySettings() {
 }
 
 export default function App() {
-  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks();
+  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, setTaskProject, orphanProject, resetTasks } = useTasks();
+  const { projects, addProject, renameProject, deleteProject } = useProjects();
   const { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave } = useGistSync();
   const [filter, setFilter] = useState('all');
   const [urgencySettings, setUrgencySettings] = useState(loadUrgencySettings);
@@ -28,8 +29,7 @@ export default function App() {
   const [tokenInput, setTokenInput] = useState('');
   const [gistReady, setGistReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [wrappedOpen, setWrappedOpen] = useState(false);
-  const [syncVisible, setSyncVisible] = useState(false);
+const [syncVisible, setSyncVisible] = useState(false);
   const settingsRef = useRef(null);
   const syncTimerRef = useRef(null);
   const justLoadedRef = useRef(false);
@@ -124,7 +124,7 @@ export default function App() {
   }
 
   async function handlePull() {
-    await flushSave(tasks);
+    await discoverGist();
     const remote = await load();
     if (remote) {
       justLoadedRef.current = true;
@@ -133,10 +133,6 @@ export default function App() {
   }
 
   const completedTasks = tasks.filter(t => t.completedAt !== null);
-  const avgCompletionHours = completedTasks.length > 0
-    ? (completedTasks.reduce((sum, t) => sum + (t.completedAt - t.createdAt), 0) / completedTasks.length / 3600000).toFixed(1)
-    : null;
-
   const startOfToday = new Date().setHours(0, 0, 0, 0);
   const todayCount = completedTasks.filter(t => t.completedAt >= startOfToday).length;
 
@@ -157,26 +153,14 @@ export default function App() {
           {todayCount > 0 && (
             <p className="streak-count">🔥 {todayCount} task{todayCount !== 1 ? 's' : ''} done today</p>
           )}
-          {avgCompletionHours !== null && (
-            <p className="avg-completion">Avg completion: {avgCompletionHours}h</p>
-          )}
-          {syncLabel && (
+{syncLabel && (
             <p className={`sync-status${syncLabel.error ? ' sync-status--error' : ''}`}>
               {syncLabel.text}
             </p>
           )}
         </div>
         <div className="header-actions">
-          {completedTasks.length > 0 && (
-            <button
-              className="wrapped-btn"
-              onClick={() => setWrappedOpen(true)}
-              aria-label="View your Wrapped"
-            >
-              <BarChart2 size={18} />
-            </button>
-          )}
-          {token && (
+{token && (
             <button
               className="pull-btn"
               onClick={handlePull}
@@ -291,11 +275,15 @@ export default function App() {
         onComplete={completeTask}
         onUncomplete={uncompleteTask}
         onMove={moveTask}
+        onSetProject={setTaskProject}
         urgencySettings={urgencySettings}
+        todayCount={todayCount}
+        projects={projects}
+        onAddProject={addProject}
+        onRenameProject={renameProject}
+        onDeleteProject={id => { orphanProject(id); deleteProject(id); }}
       />
-      {wrappedOpen && (
-        <WrappedModal tasks={tasks} onClose={() => setWrappedOpen(false)} />
-      )}
+
     </div>
   );
 }

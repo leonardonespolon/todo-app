@@ -15,10 +15,13 @@ function generateId() {
 }
 
 function migrate(tasks) {
-  // Idempotent: assign listId:'todo' to any task that predates the three-list model.
-  // Safe to run every load — only touches tasks that are missing listId.
-  if (!tasks.some(t => !t.listId)) return tasks;
-  return tasks.map(t => (t.listId ? t : { ...t, listId: 'todo' }));
+  const needsMigration = tasks.some(t => !t.listId || t.projectId === undefined);
+  if (!needsMigration) return tasks;
+  return tasks.map(t => ({
+    ...t,
+    listId: t.listId ?? 'todo',
+    projectId: t.projectId !== undefined ? t.projectId : null,
+  }));
 }
 
 function loadTasks() {
@@ -53,7 +56,7 @@ export function useTasks() {
     saveTasks(tasks);
   }, [tasks]);
 
-  function addTask(text) {
+  function addTask(text, projectId = null) {
     const trimmed = text.trim();
     if (!trimmed) return;
     setTasks(prev => [
@@ -64,6 +67,7 @@ export function useTasks() {
         createdAt: Date.now(),
         completedAt: null,
         listId: 'todo',
+        projectId,
       },
     ]);
   }
@@ -100,9 +104,21 @@ export function useTasks() {
     );
   }
 
+  function setTaskProject(id, projectId) {
+    setTasks(prev =>
+      prev.map(t => (t.id === id ? { ...t, projectId } : t))
+    );
+  }
+
+  function orphanProject(projectId) {
+    setTasks(prev =>
+      prev.map(t => (t.projectId === projectId ? { ...t, projectId: null } : t))
+    );
+  }
+
   function resetTasks(newTasks) {
     setTasks(migrate(newTasks));
   }
 
-  return { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, resetTasks };
+  return { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, setTaskProject, orphanProject, resetTasks };
 }

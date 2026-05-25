@@ -39,6 +39,7 @@ function makeTask(overrides = {}) {
     createdAt: Date.now(),
     completedAt: null,
     listId: 'todo',
+    projectId: null,
     ...overrides,
   };
 }
@@ -49,12 +50,18 @@ function renderList(tasks) {
     <TaskList
       tasks={tasks}
       filter="all"
+      onAdd={vi.fn()}
       onEdit={vi.fn()}
       onDelete={vi.fn()}
       onComplete={vi.fn()}
       onUncomplete={vi.fn()}
       onMove={onMove}
+      onSetProject={vi.fn()}
       urgencySettings={urgencySettings}
+      projects={[]}
+      onAddProject={vi.fn()}
+      onRenameProject={vi.fn()}
+      onDeleteProject={vi.fn()}
     />
   );
   return onMove;

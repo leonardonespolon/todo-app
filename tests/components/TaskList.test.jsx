@@ -16,6 +16,7 @@ function makeTask(overrides = {}) {
     createdAt: Date.now(),
     completedAt: null,
     listId: 'todo',
+    projectId: null,
     ...overrides,
   };
 }
@@ -25,12 +26,18 @@ function renderList(tasks, filter = 'all') {
     <TaskList
       tasks={tasks}
       filter={filter}
+      onAdd={noop}
       onEdit={noop}
       onDelete={noop}
       onComplete={noop}
       onUncomplete={noop}
       onMove={noop}
+      onSetProject={noop}
       urgencySettings={urgencySettings}
+      projects={[]}
+      onAddProject={noop}
+      onRenameProject={noop}
+      onDeleteProject={noop}
     />
   );
 }
