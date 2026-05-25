@@ -525,3 +525,118 @@ body {
   gap: 0.5rem;
   align-items: center;
 }
+
+/* ── Project groups ── */
+.project-group {
+  margin-bottom: 1.25rem;
+}
+
+.project-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  min-height: 1.5rem;
+}
+
+.project-group-left {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.project-group-name {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-group-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex-shrink: 0;
+}
+
+.project-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.125rem 0.3rem;
+  border-radius: 4px;
+  opacity: 0;
+  transition: color 0.15s, opacity 0.15s;
+}
+
+.project-group-header:hover .project-delete-btn {
+  opacity: 1;
+}
+
+.project-delete-btn:hover {
+  color: #dc2626;
+}
+
+.project-name-input {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  min-width: 0;
+  width: 140px;
+}
+
+/* ── New project row ── */
+.new-project-btn {
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: color 0.15s;
+}
+
+.new-project-btn:hover {
+  color: #666;
+}
+
+.new-project-form {
+  margin-top: 0.375rem;
+}
+
+.new-project-input {
+  font-size: 0.8125rem;
+  font-family: inherit;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  outline: none;
+  background: transparent;
+  padding: 0.125rem 0;
+  color: #1a1a1a;
+  width: 180px;
+}
+
+/* ── Move dropdown divider ── */
+.move-dropdown-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0.25rem 0;
+}

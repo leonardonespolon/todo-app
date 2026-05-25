@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Settings, RefreshCw } from 'lucide-react';
 import { useTasks } from './hooks/useTasks';
+import { useProjects } from './hooks/useProjects';
 import { useGistSync } from './hooks/useGistSync';
 import TaskList from './components/TaskList';
 import './App.css';
@@ -17,7 +18,8 @@ function loadUrgencySettings() {
 }
 
 export default function App() {
-  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks();
+  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, setTaskProject, orphanProject, resetTasks } = useTasks();
+  const { projects, addProject, renameProject, deleteProject } = useProjects();
   const { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave } = useGistSync();
   const [filter, setFilter] = useState('all');
   const [urgencySettings, setUrgencySettings] = useState(loadUrgencySettings);
@@ -273,8 +275,13 @@ const [syncVisible, setSyncVisible] = useState(false);
         onComplete={completeTask}
         onUncomplete={uncompleteTask}
         onMove={moveTask}
+        onSetProject={setTaskProject}
         urgencySettings={urgencySettings}
         todayCount={todayCount}
+        projects={projects}
+        onAddProject={addProject}
+        onRenameProject={renameProject}
+        onDeleteProject={id => { orphanProject(id); deleteProject(id); }}
       />
 
     </div>
