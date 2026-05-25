@@ -191,6 +191,38 @@ body {
   background: #000;
 }
 
+/* ── Mode toggle ── */
+.mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.mode-btn {
+  padding: 0.3rem 1rem;
+  background: white;
+  border: none;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: #888;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn + .mode-btn {
+  border-left: 1px solid #d4d4d4;
+}
+
+.mode-btn--active {
+  background: #1a1a1a;
+  color: white;
+}
+
 /* ── Filters ── */
 .filters {
   display: flex;
@@ -526,72 +558,131 @@ body {
   align-items: center;
 }
 
-/* ── Project groups ── */
-.project-group {
-  margin-bottom: 1.25rem;
+/* ── Project card (Work mode) ── */
+.project-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
 }
 
-.project-group-header {
+.project-card--done {
+  opacity: 0.7;
+}
+
+.project-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-  min-height: 1.5rem;
+  padding: 0.625rem 0.75rem;
+  gap: 0.5rem;
 }
 
-.project-group-left {
+.project-card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.project-card-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: default;
+  flex: 1;
+}
+
+.project-card-name--done {
+  color: #aaa;
+  text-decoration: line-through;
+  cursor: default;
+}
+
+.project-card-progress {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #aaa;
+}
+
+.project-card-controls {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  min-width: 0;
-}
-
-.project-group-name {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
-  cursor: default;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.project-group-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.125rem;
   flex-shrink: 0;
-}
-
-.project-delete-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #ccc;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0.125rem 0.3rem;
-  border-radius: 4px;
   opacity: 0;
-  transition: color 0.15s, opacity 0.15s;
+  transition: opacity 0.15s;
 }
 
-.project-group-header:hover .project-delete-btn {
+.project-card-header:hover .project-card-controls {
   opacity: 1;
 }
 
-.project-delete-btn:hover {
+.project-card-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 0.875rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.project-card-action:hover {
+  color: #666;
+}
+
+.project-card-action--delete:hover {
   color: #dc2626;
 }
 
+.project-card-body {
+  padding: 0 0.75rem 0.625rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.project-card-body .task-item {
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  border-top: none;
+  border-bottom: 1px solid #f5f5f5;
+  margin-bottom: 0;
+}
+
+.project-card-body .task-item:last-of-type {
+  border-bottom: none;
+}
+
+.add-form--subtask {
+  margin-top: 0.5rem;
+}
+
+.add-form--subtask .add-input {
+  font-size: 0.875rem;
+  padding: 0.4rem 0.625rem;
+}
+
+.add-form--subtask .add-btn {
+  font-size: 0.875rem;
+  padding: 0.4rem 0.875rem;
+}
+
+.empty-state--sm {
+  padding: 0.75rem 0;
+  font-size: 0.8125rem;
+}
+
+/* ── Project name rename input ── */
 .project-name-input {
-  font-size: 0.6875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
+  color: #1a1a1a;
   border: none;
   border-bottom: 1px solid #ccc;
   outline: none;
@@ -599,7 +690,7 @@ body {
   padding: 0;
   font-family: inherit;
   min-width: 0;
-  width: 140px;
+  width: 200px;
 }
 
 /* ── New project row ── */
@@ -612,6 +703,7 @@ body {
   cursor: pointer;
   padding: 0.25rem 0;
   transition: color 0.15s;
+  margin-top: 0.25rem;
 }
 
 .new-project-btn:hover {

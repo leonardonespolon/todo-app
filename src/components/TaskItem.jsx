@@ -19,7 +19,7 @@ const URGENCY_STYLES = {
   yellow: { background: '#FFF3CD', color: '#856404', borderColor: '#ffeeba' },
 };
 
-export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, onSetProject, urgencySettings, todayCount, projects }) {
+export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, urgencySettings, todayCount, isSubTask }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [completing, setCompleting] = useState(false);
@@ -138,7 +138,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
           )}
         </span>
       )}
-      {!isDone && onMove && (
+      {!isDone && onMove && !isSubTask && (
         <div ref={moveRef} style={{ position: 'relative', flexShrink: 0 }}>
           <button
             className="task-move"
@@ -151,10 +151,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
           {moveOpen && (
             <MoveToDropdown
               listId={task.listId}
-              projectId={task.projectId}
-              projects={projects}
               onMove={target => { onMove(task.id, target); setMoveOpen(false); }}
-              onMoveToProject={projectId => { onSetProject(task.id, projectId); setMoveOpen(false); }}
               onClose={() => setMoveOpen(false)}
             />
           )}

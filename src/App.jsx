@@ -17,9 +17,14 @@ function loadUrgencySettings() {
   }
 }
 
+function loadMode() {
+  return localStorage.getItem('todo-app-mode') === 'work' ? 'work' : 'personal';
+}
+
 export default function App() {
-  const { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, setTaskProject, orphanProject, resetTasks } = useTasks();
-  const { projects, addProject, renameProject, deleteProject } = useProjects();
+  const [mode, setMode] = useState(loadMode);
+  const { tasks, addTask, addSubTask, editTask, deleteTask, deleteProjectTasks, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks(mode);
+  const { projects, addProject, renameProject, moveProject, completeProject, uncompleteProject, deleteProject, resetProjects } = useProjects(mode);
   const { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave } = useGistSync();
   const [filter, setFilter] = useState('all');
   const [urgencySettings, setUrgencySettings] = useState(loadUrgencySettings);
@@ -29,12 +34,17 @@ export default function App() {
   const [tokenInput, setTokenInput] = useState('');
   const [gistReady, setGistReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
-const [syncVisible, setSyncVisible] = useState(false);
+  const [syncVisible, setSyncVisible] = useState(false);
   const settingsRef = useRef(null);
   const syncTimerRef = useRef(null);
   const justLoadedRef = useRef(false);
 
-  // Close settings panel on outside click
+  function switchMode(next) {
+    setMode(next);
+    localStorage.setItem('todo-app-mode', next);
+    setFilter('all');
+  }
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (settingsRef.current && !settingsRef.current.contains(e.target)) {
@@ -45,7 +55,6 @@ const [syncVisible, setSyncVisible] = useState(false);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [settingsOpen]);
 
-  // Load from Gist on mount; set gistReady when done
   useEffect(() => {
     async function init() {
       if (token) {
@@ -58,16 +67,14 @@ const [syncVisible, setSyncVisible] = useState(false);
       setGistReady(true);
     }
     init();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount-only init; token/load/resetTasks are stable
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-save to Gist on task changes (skip the load that just happened)
   useEffect(() => {
     if (!gistReady) return;
     if (justLoadedRef.current) { justLoadedRef.current = false; return; }
     scheduleSave(tasks);
-  }, [tasks]); // eslint-disable-line react-hooks/exhaustive-deps -- gistReady/scheduleSave intentionally omitted; tasks is the sole trigger
+  }, [tasks]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync status visibility — "Synced ✓" fades after 3s
   useEffect(() => {
     clearTimeout(syncTimerRef.current);
     if (syncStatus === 'synced') {
@@ -132,7 +139,12 @@ const [syncVisible, setSyncVisible] = useState(false);
     }
   }
 
-  const completedTasks = tasks.filter(t => t.completedAt !== null);
+  function handleDeleteProject(id) {
+    deleteProjectTasks(id);
+    deleteProject(id);
+  }
+
+  const completedTasks = tasks.filter(t => t.completedAt !== null && !t.projectId);
   const startOfToday = new Date().setHours(0, 0, 0, 0);
   const todayCount = completedTasks.filter(t => t.completedAt >= startOfToday).length;
 
@@ -153,14 +165,14 @@ const [syncVisible, setSyncVisible] = useState(false);
           {todayCount > 0 && (
             <p className="streak-count">🔥 {todayCount} task{todayCount !== 1 ? 's' : ''} done today</p>
           )}
-{syncLabel && (
+          {syncLabel && (
             <p className={`sync-status${syncLabel.error ? ' sync-status--error' : ''}`}>
               {syncLabel.text}
             </p>
           )}
         </div>
         <div className="header-actions">
-{token && (
+          {token && (
             <button
               className="pull-btn"
               onClick={handlePull}
@@ -251,6 +263,21 @@ const [syncVisible, setSyncVisible] = useState(false);
         </div>
       </div>
 
+      <div className="mode-toggle">
+        <button
+          className={`mode-btn${mode === 'personal' ? ' mode-btn--active' : ''}`}
+          onClick={() => switchMode('personal')}
+        >
+          Personal
+        </button>
+        <button
+          className={`mode-btn${mode === 'work' ? ' mode-btn--active' : ''}`}
+          onClick={() => switchMode('work')}
+        >
+          Work
+        </button>
+      </div>
+
       <div className="filters">
         <button
           className={`filter-btn${filter === 'all' ? ' filter-btn--active' : ''}`}
@@ -267,23 +294,26 @@ const [syncVisible, setSyncVisible] = useState(false);
       </div>
 
       <TaskList
+        mode={mode}
         tasks={tasks}
+        projects={projects}
         filter={filter}
         onAdd={addTask}
+        onAddSubTask={addSubTask}
         onEdit={editTask}
         onDelete={deleteTask}
         onComplete={completeTask}
         onUncomplete={uncompleteTask}
         onMove={moveTask}
-        onSetProject={setTaskProject}
         urgencySettings={urgencySettings}
         todayCount={todayCount}
-        projects={projects}
         onAddProject={addProject}
         onRenameProject={renameProject}
-        onDeleteProject={id => { orphanProject(id); deleteProject(id); }}
+        onMoveProject={moveProject}
+        onCompleteProject={completeProject}
+        onUncompleteProject={uncompleteProject}
+        onDeleteProject={handleDeleteProject}
       />
-
     </div>
   );
 }

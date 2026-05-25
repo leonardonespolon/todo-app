@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 
-// Completion is derived from completedAt: null = active, timestamp = done.
-// List assignment is derived from listId: 'todo' | 'watch' | 'later'.
-
-const STORAGE_KEY = 'todo-app-tasks';
+// Standalone tasks: listId set, projectId: null
+// Sub-tasks: projectId set, no listId
 
 function generateId() {
   try {
@@ -14,36 +12,41 @@ function generateId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+function storageKey(mode) {
+  return `todo-app-tasks-${mode}`;
+}
+
 function migrate(tasks) {
-  const needsMigration = tasks.some(t => !t.listId || t.projectId === undefined);
-  if (!needsMigration) return tasks;
   return tasks.map(t => ({
+    projectId: null,
+    listId: 'todo',
     ...t,
-    listId: t.listId ?? 'todo',
-    projectId: t.projectId !== undefined ? t.projectId : null,
   }));
 }
 
-function loadTasks() {
+function loadTasks(mode) {
   try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [];
-    return migrate(raw);
+    return migrate(JSON.parse(localStorage.getItem(storageKey(mode))) ?? []);
   } catch {
     return [];
   }
 }
 
-function saveTasks(tasks) {
+function saveTasks(mode, tasks) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    localStorage.setItem(storageKey(mode), JSON.stringify(tasks));
   } catch (e) {
     console.warn('localStorage write failed:', e);
   }
 }
 
-export function useTasks() {
-  const [tasks, setTasks] = useState(loadTasks);
+export function useTasks(mode) {
+  const [tasks, setTasks] = useState(() => loadTasks(mode));
   const [, setTick] = useState(0);
+
+  useEffect(() => {
+    setTasks(loadTasks(mode));
+  }, [mode]);
 
   // Force re-render every 60s so urgency colors update without a page reload.
   useEffect(() => {
@@ -51,74 +54,73 @@ export function useTasks() {
     return () => clearInterval(id);
   }, []);
 
-  // Sync to localStorage on every change.
   useEffect(() => {
-    saveTasks(tasks);
-  }, [tasks]);
+    saveTasks(mode, tasks);
+  }, [tasks, mode]);
 
-  function addTask(text, projectId = null) {
+  function addTask(text) {
     const trimmed = text.trim();
     if (!trimmed) return;
-    setTasks(prev => [
-      ...prev,
-      {
-        id: generateId(),
-        text: trimmed,
-        createdAt: Date.now(),
-        completedAt: null,
-        listId: 'todo',
-        projectId,
-      },
-    ]);
+    setTasks(prev => [...prev, {
+      id: generateId(),
+      text: trimmed,
+      createdAt: Date.now(),
+      completedAt: null,
+      listId: 'todo',
+      projectId: null,
+    }]);
+  }
+
+  function addSubTask(text, projectId) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setTasks(prev => [...prev, {
+      id: generateId(),
+      text: trimmed,
+      createdAt: Date.now(),
+      completedAt: null,
+      projectId,
+    }]);
   }
 
   function editTask(id, newText) {
-    setTasks(prev =>
-      prev.map(t => (t.id === id ? { ...t, text: newText } : t))
-    );
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, text: newText } : t));
   }
 
   function deleteTask(id) {
     setTasks(prev => prev.filter(t => t.id !== id));
   }
 
+  function deleteProjectTasks(projectId) {
+    setTasks(prev => prev.filter(t => t.projectId !== projectId));
+  }
+
   function completeTask(id) {
-    setTasks(prev =>
-      prev.map(t =>
-        t.id === id ? { ...t, completedAt: Date.now() } : t
-      )
-    );
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, completedAt: Date.now() } : t));
   }
 
   function uncompleteTask(id) {
-    setTasks(prev =>
-      prev.map(t =>
-        t.id === id ? { ...t, completedAt: null } : t
-      )
-    );
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, completedAt: null } : t));
   }
 
   function moveTask(id, listId) {
-    setTasks(prev =>
-      prev.map(t => (t.id === id ? { ...t, listId } : t))
-    );
-  }
-
-  function setTaskProject(id, projectId) {
-    setTasks(prev =>
-      prev.map(t => (t.id === id ? { ...t, projectId } : t))
-    );
-  }
-
-  function orphanProject(projectId) {
-    setTasks(prev =>
-      prev.map(t => (t.projectId === projectId ? { ...t, projectId: null } : t))
-    );
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, listId } : t));
   }
 
   function resetTasks(newTasks) {
-    setTasks(migrate(newTasks));
+    setTasks(migrate(newTasks ?? []));
   }
 
-  return { tasks, addTask, editTask, deleteTask, completeTask, uncompleteTask, moveTask, setTaskProject, orphanProject, resetTasks };
+  return {
+    tasks,
+    addTask,
+    addSubTask,
+    editTask,
+    deleteTask,
+    deleteProjectTasks,
+    completeTask,
+    uncompleteTask,
+    moveTask,
+    resetTasks,
+  };
 }
