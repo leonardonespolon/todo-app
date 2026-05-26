@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core';
+import { ArrowRight, Trash2 } from 'lucide-react';
 import TaskItem from './TaskItem';
 import { getUrgency } from '../utils/getUrgency';
 
@@ -131,10 +132,10 @@ function ProjectCard({
                   onClick={() => setMoveOpen(o => !o)}
                   aria-label="Move project"
                 >
-                  ↗
+                  <ArrowRight size={15} />
                 </button>
                 {moveOpen && (
-                  <div className="move-dropdown" role="menu">
+                  <div className="move-dropdown move-dropdown--project" role="menu">
                     {moveTargets.map(target => (
                       <button
                         key={target}
@@ -158,7 +159,7 @@ function ProjectCard({
               }}
               aria-label="Delete project"
             >
-              ×
+              <Trash2 size={15} />
             </button>
             <button
               className="section-collapse-btn"
@@ -222,35 +223,26 @@ function ProjectCard({
 }
 
 function NewProjectRow({ onAdd }) {
-  const [adding, setAdding] = useState(false);
   const [text, setText] = useState('');
-
-  if (!adding) {
-    return (
-      <button className="new-project-btn" onClick={() => setAdding(true)}>
-        + New project
-      </button>
-    );
-  }
 
   return (
     <form
-      className="new-project-form"
+      className="add-form add-form--inline"
+      style={{ marginTop: '0.5rem' }}
       onSubmit={e => {
         e.preventDefault();
         if (text.trim()) { onAdd(text); setText(''); }
-        setAdding(false);
       }}
     >
       <input
-        className="new-project-input"
+        className="add-input"
+        type="text"
+        placeholder="New project..."
         value={text}
         onChange={e => setText(e.target.value)}
-        placeholder="Project name..."
-        autoFocus
-        onBlur={() => { setAdding(false); setText(''); }}
-        onKeyDown={e => { if (e.key === 'Escape') { setAdding(false); setText(''); } }}
+        autoComplete="off"
       />
+      <button type="submit" className="add-btn" disabled={!text.trim()}>Add</button>
     </form>
   );
 }
@@ -369,7 +361,6 @@ export default function TaskList({
   const laterProjects = activeProjects.filter(p => p.listId === 'later');
 
   const totalTodo = visibleTodo.length + todoProjects.length;
-  const showTodo = filter !== 'today' || totalTodo > 0;
 
   function SectionHeader({ label, count, collapsible, listKey }) {
     return (
@@ -440,8 +431,7 @@ export default function TaskList({
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div>
         {/* ── TODO ── */}
-        {showTodo && (
-          <section className="task-section">
+        <section className="task-section">
             <SectionHeader label="Todo" count={totalTodo} collapsible={false} />
             <form className="add-form add-form--inline" onSubmit={handleAdd}>
               <input
@@ -461,7 +451,6 @@ export default function TaskList({
             </DroppableSection>
             {mode === 'work' && <NewProjectRow onAdd={onAddProject} />}
           </section>
-        )}
 
         {/* ── WATCH ── */}
         <section className="task-section">
