@@ -49,7 +49,7 @@ export function useGistSync() {
     }
   }
 
-  async function doSave(tasks) {
+  async function doSave(payload) {
     if (isSavingRef.current) return;
     isSavingRef.current = true;
     const tok = tokenRef.current;
@@ -63,7 +63,7 @@ export function useGistSync() {
           body: JSON.stringify({
             description: 'Todo App Tasks',
             public: false,
-            files: { [FILENAME]: { content: JSON.stringify(tasks) } },
+            files: { [FILENAME]: { content: JSON.stringify(payload) } },
           }),
         });
         gistIdRef.current = data.id;
@@ -72,7 +72,7 @@ export function useGistSync() {
         await ghFetch(tok, `/gists/${gistIdRef.current}`, {
           method: 'PATCH',
           body: JSON.stringify({
-            files: { [FILENAME]: { content: JSON.stringify(tasks) } },
+            files: { [FILENAME]: { content: JSON.stringify(payload) } },
           }),
         });
       }
@@ -108,7 +108,11 @@ export function useGistSync() {
       const data = await ghFetch(tok, `/gists/${id}`);
       const content = data.files[FILENAME]?.content;
       setSyncStatus('synced');
-      return content ? JSON.parse(content) : null;
+      if (!content) return null;
+      const parsed = JSON.parse(content);
+      // old format was a flat array (tasks only, no mode info) — treat as no remote data
+      if (Array.isArray(parsed)) return null;
+      return parsed;
     } catch (e) {
       setSyncStatus('error');
       setSyncError(e.message);
@@ -119,9 +123,9 @@ export function useGistSync() {
   // NOTE: functions are not wrapped in useCallback intentionally — all mutable state
   // goes through refs (tokenRef, gistIdRef), so there are no stale closure issues.
   // App.jsx consumers use eslint-disable-line on deps arrays where needed.
-  function scheduleSave(tasks) {
+  function scheduleSave(payload) {
     if (!tokenRef.current) return;
-    pendingTasksRef.current = tasks;
+    pendingTasksRef.current = payload;
     clearTimeout(debounceRef.current);
     setSyncStatus('pending');
     debounceRef.current = setTimeout(async () => {
@@ -137,14 +141,14 @@ export function useGistSync() {
     }, 1500);
   }
 
-  async function flushSave(tasks) {
+  async function flushSave(payload) {
     if (!tokenRef.current) return;
     clearTimeout(debounceRef.current);
     await waitForSaveIdle(); // wait for any in-flight save to complete first
     setSyncStatus('syncing');
     setSyncError('');
     try {
-      await doSave(tasks);
+      await doSave(payload);
       setSyncStatus('synced');
     } catch (e) {
       setSyncStatus('error');
