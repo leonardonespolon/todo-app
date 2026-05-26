@@ -55,13 +55,35 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [settingsOpen]);
 
+  function buildPayload() {
+    return {
+      personal: {
+        tasks: JSON.parse(localStorage.getItem('todo-app-tasks-personal') ?? '[]'),
+        projects: JSON.parse(localStorage.getItem('todo-app-projects-personal') ?? '[]'),
+      },
+      work: {
+        tasks: JSON.parse(localStorage.getItem('todo-app-tasks-work') ?? '[]'),
+        projects: JSON.parse(localStorage.getItem('todo-app-projects-work') ?? '[]'),
+      },
+    };
+  }
+
+  function applyRemote(remote, currentMode) {
+    const m = currentMode ?? mode;
+    const other = m === 'personal' ? 'work' : 'personal';
+    localStorage.setItem(`todo-app-tasks-${other}`, JSON.stringify(remote[other]?.tasks ?? []));
+    localStorage.setItem(`todo-app-projects-${other}`, JSON.stringify(remote[other]?.projects ?? []));
+    resetTasks(remote[m]?.tasks ?? []);
+    resetProjects(remote[m]?.projects ?? []);
+  }
+
   useEffect(() => {
     async function init() {
       if (token) {
         const remote = await load();
         if (remote) {
           justLoadedRef.current = true;
-          resetTasks(remote);
+          applyRemote(remote);
         }
       }
       setGistReady(true);
@@ -72,8 +94,8 @@ export default function App() {
   useEffect(() => {
     if (!gistReady) return;
     if (justLoadedRef.current) { justLoadedRef.current = false; return; }
-    scheduleSave(tasks);
-  }, [tasks]); // eslint-disable-line react-hooks/exhaustive-deps
+    scheduleSave(buildPayload());
+  }, [tasks, projects]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     clearTimeout(syncTimerRef.current);
@@ -117,7 +139,7 @@ export default function App() {
     const remote = await load();
     if (remote) {
       justLoadedRef.current = true;
-      resetTasks(remote);
+      applyRemote(remote);
     }
     setGistReady(true);
     setSettingsOpen(false);
@@ -135,7 +157,7 @@ export default function App() {
     const remote = await load();
     if (remote) {
       justLoadedRef.current = true;
-      resetTasks(remote);
+      applyRemote(remote);
     }
   }
 
