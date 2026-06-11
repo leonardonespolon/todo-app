@@ -321,37 +321,51 @@ body {
   color: var(--color-delete);
 }
 
-/* ── Theme picker ── */
-.theme-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  border: var(--border-w) solid var(--color-border-strong);
-  border-radius: var(--radius);
-  overflow: hidden;
-  width: fit-content;
+/* ── Theme menu (header) ── */
+.theme-wrapper {
+  position: relative;
 }
 
-.theme-btn {
-  flex: 1;
-  padding: 0.3rem 0.5rem;
+.theme-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  min-width: 140px;
   background: var(--color-surface);
+  border: var(--border-w) solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-dropdown);
+  overflow: hidden;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: none;
   border: none;
   font-size: 0.8125rem;
   font-family: inherit;
-  font-weight: 500;
-  color: var(--color-icon);
+  color: var(--color-text);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  text-align: left;
+  white-space: nowrap;
 }
 
-.theme-btn + .theme-btn {
-  border-left: 1px solid var(--color-border-strong);
+.theme-option:hover {
+  background: var(--color-hover-bg);
 }
 
-.theme-btn--active {
-  background: var(--color-accent);
-  color: var(--color-accent-text);
+.theme-option--active {
+  font-weight: 600;
+}
+
+.theme-option-check {
+  margin-left: auto;
+  color: var(--color-success);
 }
 
 /* ── Add form ── */

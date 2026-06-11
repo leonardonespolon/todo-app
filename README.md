@@ -12,7 +12,7 @@ Supports personal/work modes, project organization, urgency indicators, and opti
 - Urgency indicators (configurable warning/critical thresholds)
 - Today filter with daily streak tracking
 - Confetti on task completion
-- Light, dark, retro (NES-style), and system theme (Settings → Theme)
+- Light, dark, retro (NES-style), and system theme (header theme menu)
 - Focus mode — one click hides everything except your top 3 Todo items
 - Optional GitHub Gist sync for cloud backup
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings, RefreshCw, Crosshair } from 'lucide-react';
+import { Settings, RefreshCw, Crosshair, Sun, Moon, Gamepad2, Monitor, Check } from 'lucide-react';
 import { useTasks } from './hooks/useTasks';
 import { useProjects } from './hooks/useProjects';
 import { useGistSync } from './hooks/useGistSync';
@@ -8,6 +8,13 @@ import TaskList from './components/TaskList';
 import './App.css';
 
 const DEFAULT_URGENCY = { warning: 24, critical: 48 };
+
+const THEME_OPTIONS = [
+  { id: 'light', label: 'Light', Icon: Sun },
+  { id: 'dark', label: 'Dark', Icon: Moon },
+  { id: 'retro', label: 'Retro', Icon: Gamepad2 },
+  { id: 'system', label: 'System', Icon: Monitor },
+];
 
 function loadUrgencySettings() {
   try {
@@ -37,7 +44,9 @@ export default function App() {
   const [gistReady, setGistReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [syncVisible, setSyncVisible] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const settingsRef = useRef(null);
+  const themeRef = useRef(null);
   const syncTimerRef = useRef(null);
   const justLoadedRef = useRef(false);
 
@@ -62,6 +71,16 @@ export default function App() {
     if (settingsOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [settingsOpen]);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (themeRef.current && !themeRef.current.contains(e.target)) {
+        setThemeOpen(false);
+      }
+    }
+    if (themeOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [themeOpen]);
 
   function buildPayload() {
     return {
@@ -216,6 +235,37 @@ export default function App() {
           >
             <Crosshair size={18} />
           </button>
+          <div className="theme-wrapper" ref={themeRef}>
+            <button
+              className="pull-btn"
+              onClick={() => setThemeOpen(o => !o)}
+              aria-label="Theme"
+              aria-expanded={themeOpen}
+              title="Theme"
+            >
+              {(() => {
+                const { Icon } = THEME_OPTIONS.find(o => o.id === theme) ?? THEME_OPTIONS[3];
+                return <Icon size={18} />;
+              })()}
+            </button>
+            {themeOpen && (
+              <div className="theme-dropdown" role="menu">
+                {THEME_OPTIONS.map(({ id, label, Icon }) => (
+                  <button
+                    key={id}
+                    className={`theme-option${theme === id ? ' theme-option--active' : ''}`}
+                    role="menuitemradio"
+                    aria-checked={theme === id}
+                    onClick={() => { setTheme(id); setThemeOpen(false); }}
+                  >
+                    <Icon size={15} />
+                    <span>{label}</span>
+                    {theme === id && <Check size={14} className="theme-option-check" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {token && (
             <button
               className="pull-btn"
@@ -261,21 +311,6 @@ export default function App() {
                 </label>
                 {settingsError && <p className="settings-error">{settingsError}</p>}
                 <button className="settings-save" onClick={saveSettings}>Save</button>
-
-                <hr className="settings-divider" />
-                <p className="settings-title">Theme</p>
-                <div className="theme-picker" role="group" aria-label="Theme">
-                  {['light', 'dark', 'retro', 'system'].map(t => (
-                    <button
-                      key={t}
-                      className={`theme-btn${theme === t ? ' theme-btn--active' : ''}`}
-                      onClick={() => setTheme(t)}
-                      aria-pressed={theme === t}
-                    >
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
-                    </button>
-                  ))}
-                </div>
 
                 <hr className="settings-divider" />
                 <p className="settings-title">Gist Sync</p>
