@@ -1,6 +1,8 @@
 # Todo App
 
-A personal task manager built with React. Supports personal/work modes, project organization, urgency indicators, and optional cloud sync via GitHub Gist.
+A personal task manager built with React. **[Try it live →](https://leonardonespolon.github.io/todo-app/)**
+
+Supports personal/work modes, project organization, urgency indicators, and optional cloud sync via GitHub Gist. No sign-up required — runs entirely in the browser.
 
 ## Features
 
