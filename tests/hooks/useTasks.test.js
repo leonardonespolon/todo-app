@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTasks } from '../../src/hooks/useTasks';
 
-const STORAGE_KEY = 'todo-app-tasks';
+const STORAGE_KEY = 'todo-app-tasks-personal';
 
 beforeEach(() => {
   localStorage.clear();
@@ -13,19 +13,19 @@ beforeEach(() => {
 
 describe('addTask', () => {
   it('creates a task with listId: todo', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Buy milk'));
     expect(result.current.tasks[0].listId).toBe('todo');
   });
 
   it('empty string is a no-op', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('   '));
     expect(result.current.tasks).toHaveLength(0);
   });
 
   it('persists new task to localStorage', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Buy milk'));
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(saved[0].listId).toBe('todo');
@@ -36,7 +36,7 @@ describe('addTask', () => {
 
 describe('moveTask', () => {
   it('moves a task to watch', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Review PR'));
     const id = result.current.tasks[0].id;
     act(() => result.current.moveTask(id, 'watch'));
@@ -44,7 +44,7 @@ describe('moveTask', () => {
   });
 
   it('moves a task to later', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Read book'));
     const id = result.current.tasks[0].id;
     act(() => result.current.moveTask(id, 'later'));
@@ -52,7 +52,7 @@ describe('moveTask', () => {
   });
 
   it('moves a task back to todo', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Read book'));
     const id = result.current.tasks[0].id;
     act(() => result.current.moveTask(id, 'later'));
@@ -61,7 +61,7 @@ describe('moveTask', () => {
   });
 
   it('persists the new listId to localStorage', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Review PR'));
     const id = result.current.tasks[0].id;
     act(() => result.current.moveTask(id, 'watch'));
@@ -74,7 +74,7 @@ describe('moveTask', () => {
 
 describe('completeTask', () => {
   it('sets completedAt without changing listId', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Ship it'));
     const id = result.current.tasks[0].id;
     act(() => result.current.moveTask(id, 'watch'));
@@ -85,7 +85,7 @@ describe('completeTask', () => {
   });
 
   it('sets completedAt to a number', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Ship it'));
     const id = result.current.tasks[0].id;
     act(() => result.current.completeTask(id));
@@ -93,7 +93,7 @@ describe('completeTask', () => {
   });
 
   it('does NOT add a completed boolean field', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Ship it'));
     const id = result.current.tasks[0].id;
     act(() => result.current.completeTask(id));
@@ -103,7 +103,7 @@ describe('completeTask', () => {
 
 describe('uncompleteTask', () => {
   it('sets completedAt to null and preserves listId', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Ship it'));
     const id = result.current.tasks[0].id;
     act(() => result.current.moveTask(id, 'watch'));
@@ -122,7 +122,7 @@ describe('migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([
       { id: '1', text: 'Old task', createdAt: 1000, completedAt: null },
     ]));
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     expect(result.current.tasks[0].listId).toBe('todo');
   });
 
@@ -130,7 +130,7 @@ describe('migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([
       { id: '1', text: 'Watch task', createdAt: 1000, completedAt: null, listId: 'watch' },
     ]));
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     expect(result.current.tasks[0].listId).toBe('watch');
   });
 
@@ -139,8 +139,8 @@ describe('migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([
       { id: '1', text: 'Old task', createdAt: 1000, completedAt: null },
     ]));
-    renderHook(() => useTasks()); // first mount (discarded in StrictMode)
-    const { result } = renderHook(() => useTasks()); // second mount (kept)
+    renderHook(() => useTasks('personal')); // first mount (discarded in StrictMode)
+    const { result } = renderHook(() => useTasks('personal')); // second mount (kept)
     expect(result.current.tasks[0].listId).toBe('todo');
   });
 });
@@ -149,13 +149,13 @@ describe('migration', () => {
 
 describe('localStorage round-trip', () => {
   it('tasks survive a simulated reload', () => {
-    const { result: r1 } = renderHook(() => useTasks());
+    const { result: r1 } = renderHook(() => useTasks('personal'));
     act(() => r1.current.addTask('Survive reload'));
     const id = r1.current.tasks[0].id;
     act(() => r1.current.moveTask(id, 'later'));
 
     // Simulate reload: new hook instance reads from localStorage
-    const { result: r2 } = renderHook(() => useTasks());
+    const { result: r2 } = renderHook(() => useTasks('personal'));
     expect(r2.current.tasks[0].listId).toBe('later');
     expect(r2.current.tasks[0].text).toBe('Survive reload');
   });
@@ -168,7 +168,7 @@ describe('generateId fallback', () => {
     vi.spyOn(globalThis.crypto, 'randomUUID').mockImplementation(() => {
       throw new Error('not supported');
     });
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Fallback id task'));
     expect(result.current.tasks[0].id).toBeTruthy();
     expect(typeof result.current.tasks[0].id).toBe('string');
@@ -179,7 +179,7 @@ describe('generateId fallback', () => {
 
 describe('resetTasks', () => {
   it('replaces all tasks with the provided array', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Old task'));
     const replacement = [
       { id: 'r1', text: 'Remote task', createdAt: 9000, completedAt: null, listId: 'watch' },
@@ -191,13 +191,13 @@ describe('resetTasks', () => {
   });
 
   it('persists the reset tasks to localStorage', () => {
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks('personal'));
     act(() => result.current.addTask('Old task'));
     const replacement = [
       { id: 'r1', text: 'Remote task', createdAt: 9000, completedAt: null, listId: 'later' },
     ];
     act(() => result.current.resetTasks(replacement));
-    const saved = JSON.parse(localStorage.getItem('todo-app-tasks'));
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(saved[0].id).toBe('r1');
     expect(saved[0].listId).toBe('later');
   });

@@ -21,11 +21,10 @@ function makeTask(overrides = {}) {
   };
 }
 
-function renderList(tasks, filter = 'all') {
+function renderList(tasks) {
   return render(
     <TaskList
       tasks={tasks}
-      filter={filter}
       onAdd={noop}
       onEdit={noop}
       onDelete={noop}
@@ -80,47 +79,6 @@ describe('section visibility', () => {
   it('hides Completed section when no completed tasks', () => {
     renderList([makeTask()]);
     expect(screen.queryByText('Completed')).not.toBeInTheDocument();
-  });
-});
-
-describe('Today filter', () => {
-  const startOfToday = new Date().setHours(0, 0, 0, 0);
-  const yesterday = startOfToday - 1000;
-
-  it('hides Todo tasks created before today', () => {
-    const old = makeTask({ text: 'Old task', createdAt: yesterday });
-    renderList([old], 'today');
-    expect(screen.queryByText('Old task')).not.toBeInTheDocument();
-  });
-
-  it('shows Todo tasks created today', () => {
-    const fresh = makeTask({ text: 'New task', createdAt: startOfToday + 1000 });
-    renderList([fresh], 'today');
-    expect(screen.getByText('New task')).toBeInTheDocument();
-  });
-
-  it('shows Watch tasks regardless of creation date in Today filter', () => {
-    const old = makeTask({ text: 'Old watch', listId: 'watch', createdAt: yesterday });
-    renderList([old], 'today');
-    expect(screen.getByText('Old watch')).toBeInTheDocument();
-  });
-
-  it('shows Later tasks regardless of creation date in Today filter', () => {
-    const old = makeTask({ text: 'Old later', listId: 'later', createdAt: yesterday });
-    renderList([old], 'today');
-    expect(screen.getByText('Old later')).toBeInTheDocument();
-  });
-
-  it('hides completed tasks from before today in Today filter', () => {
-    const old = makeTask({ text: 'Old done', completedAt: yesterday });
-    renderList([old], 'today');
-    expect(screen.queryByText('Old done')).not.toBeInTheDocument();
-  });
-
-  it('shows completed tasks from today in Today filter', () => {
-    const fresh = makeTask({ text: 'Done today', completedAt: startOfToday + 1000 });
-    renderList([fresh], 'today');
-    expect(screen.getByText('Done today')).toBeInTheDocument();
   });
 });
 
