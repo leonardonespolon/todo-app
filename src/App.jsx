@@ -26,7 +26,6 @@ export default function App() {
   const { tasks, addTask, addSubTask, editTask, deleteTask, deleteProjectTasks, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks(mode);
   const { projects, addProject, renameProject, moveProject, completeProject, uncompleteProject, deleteProject, resetProjects } = useProjects(mode);
   const { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave } = useGistSync();
-  const [filter, setFilter] = useState('all');
   const [urgencySettings, setUrgencySettings] = useState(loadUrgencySettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState(urgencySettings);
@@ -42,7 +41,6 @@ export default function App() {
   function switchMode(next) {
     setMode(next);
     localStorage.setItem('todo-app-mode', next);
-    setFilter('all');
   }
 
   useEffect(() => {
@@ -300,26 +298,10 @@ export default function App() {
         </button>
       </div>
 
-      <div className="filters">
-        <button
-          className={`filter-btn${filter === 'all' ? ' filter-btn--active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          All
-        </button>
-        <button
-          className={`filter-btn${filter === 'today' ? ' filter-btn--active' : ''}`}
-          onClick={() => setFilter('today')}
-        >
-          Today
-        </button>
-      </div>
-
       <TaskList
         mode={mode}
         tasks={tasks}
         projects={projects}
-        filter={filter}
         onAdd={addTask}
         onAddSubTask={addSubTask}
         onEdit={editTask}

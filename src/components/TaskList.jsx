@@ -275,7 +275,6 @@ export default function TaskList({
   mode,
   tasks,
   projects,
-  filter,
   onAdd,
   onAddSubTask,
   onEdit,
@@ -320,8 +319,6 @@ export default function TaskList({
     onMove(active.id, over.id);
   }
 
-  const startOfToday = new Date().setHours(0, 0, 0, 0);
-
   // Standalone tasks only (no sub-tasks)
   const standaloneTasks = tasks.filter(t => !t.projectId);
   const active = standaloneTasks.filter(t => !t.completedAt);
@@ -331,18 +328,11 @@ export default function TaskList({
   const watchTasks = active.filter(t => t.listId === 'watch');
   const laterTasks = active.filter(t => t.listId === 'later');
 
-  function filterAndSort(list) {
-    const filtered = filter === 'today' ? list.filter(t => t.createdAt >= startOfToday) : list;
-    return sortByUrgency(filtered, warning, critical);
-  }
-
-  const visibleTodo = filterAndSort(todoTasks);
+  const visibleTodo = sortByUrgency(todoTasks, warning, critical);
   const visibleWatch = sortByCreated(watchTasks);
   const visibleLater = sortByCreated(laterTasks);
 
-  const visibleCompleted = filter === 'today'
-    ? [...completedStandalone.filter(t => t.completedAt >= startOfToday)].sort((a, b) => b.completedAt - a.completedAt)
-    : [...completedStandalone].sort((a, b) => b.completedAt - a.completedAt);
+  const visibleCompleted = [...completedStandalone].sort((a, b) => b.completedAt - a.completedAt);
 
   // Work mode: projects bucketed by section
   const subTaskMap = {};
