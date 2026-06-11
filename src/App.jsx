@@ -164,9 +164,10 @@ export default function App() {
     deleteProject(id);
   }
 
-  const completedTasks = tasks.filter(t => t.completedAt !== null && !t.projectId);
   const startOfToday = new Date().setHours(0, 0, 0, 0);
-  const todayCount = completedTasks.filter(t => t.completedAt >= startOfToday).length;
+  const otherMode = mode === 'personal' ? 'work' : 'personal';
+  const otherTasks = JSON.parse(localStorage.getItem(`todo-app-tasks-${otherMode}`) ?? '[]');
+  const todayCount = [...tasks, ...otherTasks].filter(t => t.completedAt !== null && t.completedAt >= startOfToday).length;
 
   const syncLabel = (() => {
     if (!token || !syncVisible) return null;
