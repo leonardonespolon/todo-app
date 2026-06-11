@@ -65,17 +65,23 @@ describe('load', () => {
   it('fetches from correct URL with Authorization header', async () => {
     localStorage.setItem('todo-gist-token', 'ghp_test');
     localStorage.setItem('todo-gist-id', 'gist123');
-    const tasks = [{ id: '1', text: 'Test', createdAt: 1000, completedAt: null, listId: 'todo' }];
+    const payload = {
+      personal: {
+        tasks: [{ id: '1', text: 'Test', createdAt: 1000, completedAt: null, listId: 'todo' }],
+        projects: [],
+      },
+      work: { tasks: [], projects: [] },
+    };
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        files: { 'todo-app-tasks.json': { content: JSON.stringify(tasks) } },
+        files: { 'todo-app-tasks.json': { content: JSON.stringify(payload) } },
       }),
     });
     const { result } = renderHook(() => useGistSync());
     let loaded;
     await act(async () => { loaded = await result.current.load(); });
-    expect(loaded).toEqual(tasks);
+    expect(loaded).toEqual(payload);
     expect(fetch).toHaveBeenCalledWith(
       'https://api.github.com/gists/gist123',
       expect.objectContaining({
