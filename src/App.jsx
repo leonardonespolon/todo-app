@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings, RefreshCw } from 'lucide-react';
+import { Settings, RefreshCw, Crosshair } from 'lucide-react';
 import { useTasks } from './hooks/useTasks';
 import { useProjects } from './hooks/useProjects';
 import { useGistSync } from './hooks/useGistSync';
@@ -27,7 +27,8 @@ export default function App() {
   const { tasks, addTask, addSubTask, editTask, deleteTask, deleteProjectTasks, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks(mode);
   const { projects, addProject, renameProject, moveProject, completeProject, uncompleteProject, deleteProject, resetProjects } = useProjects(mode);
   const { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave } = useGistSync();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [focusMode, setFocusMode] = useState(() => localStorage.getItem('todo-app-focus') === 'true');
   const [urgencySettings, setUrgencySettings] = useState(loadUrgencySettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState(urgencySettings);
@@ -39,6 +40,13 @@ export default function App() {
   const settingsRef = useRef(null);
   const syncTimerRef = useRef(null);
   const justLoadedRef = useRef(false);
+
+  function toggleFocusMode() {
+    setFocusMode(prev => {
+      localStorage.setItem('todo-app-focus', String(!prev));
+      return !prev;
+    });
+  }
 
   function switchMode(next) {
     setMode(next);
@@ -186,7 +194,11 @@ export default function App() {
         <div>
           <h1 className="app-title">To Do</h1>
           {todayCount > 0 && (
-            <p className="streak-count">🔥 {todayCount} task{todayCount !== 1 ? 's' : ''} done today</p>
+            resolvedTheme === 'retro' ? (
+              <p className="streak-count streak-count--score">SCORE {String(todayCount * 100).padStart(6, '0')}</p>
+            ) : (
+              <p className="streak-count">🔥 {todayCount} task{todayCount !== 1 ? 's' : ''} done today</p>
+            )
           )}
           {syncLabel && (
             <p className={`sync-status${syncLabel.error ? ' sync-status--error' : ''}`}>
@@ -195,6 +207,15 @@ export default function App() {
           )}
         </div>
         <div className="header-actions">
+          <button
+            className={`pull-btn${focusMode ? ' focus-btn--active' : ''}`}
+            onClick={toggleFocusMode}
+            aria-label={focusMode ? 'Exit focus mode' : 'Enter focus mode'}
+            aria-pressed={focusMode}
+            title={focusMode ? 'Exit focus mode' : 'Focus mode: top 3 tasks only'}
+          >
+            <Crosshair size={18} />
+          </button>
           {token && (
             <button
               className="pull-btn"
@@ -244,7 +265,7 @@ export default function App() {
                 <hr className="settings-divider" />
                 <p className="settings-title">Theme</p>
                 <div className="theme-picker" role="group" aria-label="Theme">
-                  {['light', 'dark', 'system'].map(t => (
+                  {['light', 'dark', 'retro', 'system'].map(t => (
                     <button
                       key={t}
                       className={`theme-btn${theme === t ? ' theme-btn--active' : ''}`}
@@ -318,6 +339,7 @@ export default function App() {
 
       <TaskList
         mode={mode}
+        focusMode={focusMode}
         tasks={tasks}
         projects={projects}
         onAdd={addTask}

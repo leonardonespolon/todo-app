@@ -273,6 +273,7 @@ function sortByCreated(tasks) {
 
 export default function TaskList({
   mode,
+  focusMode,
   tasks,
   projects,
   onAdd,
@@ -414,6 +415,36 @@ export default function TaskList({
         urgencySettings={urgencySettings}
         todayCount={todayCount}
       />
+    );
+  }
+
+  // Focus mode: only the top 3 Todo items, nothing else.
+  if (focusMode) {
+    const focusTasks = visibleTodo.slice(0, 3);
+    const focusProjects = todoProjects.slice(0, Math.max(0, 3 - focusTasks.length));
+    const shown = focusTasks.length + focusProjects.length;
+    const hidden = totalTodo - shown;
+    return (
+      <section className="task-section">
+        <SectionHeader label="Focus" count={0} collapsible={false} />
+        <form className="add-form add-form--inline" onSubmit={handleAdd}>
+          <input
+            className="add-input"
+            type="text"
+            placeholder="Add a task..."
+            value={newText}
+            onChange={e => setNewText(e.target.value)}
+            autoComplete="off"
+          />
+          <button type="submit" className="add-btn">Add</button>
+        </form>
+        {focusTasks.map(t => renderTask(t, false))}
+        {mode === 'work' && focusProjects.map(renderProjectCard)}
+        {shown === 0 && <p className="empty-state">Nothing to focus on. Add a task above.</p>}
+        {hidden > 0 && (
+          <p className="focus-more">+{hidden} more in Todo</p>
+        )}
+      </section>
     );
   }
 

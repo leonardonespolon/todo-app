@@ -12,7 +12,8 @@ Supports personal/work modes, project organization, urgency indicators, and opti
 - Urgency indicators (configurable warning/critical thresholds)
 - Today filter with daily streak tracking
 - Confetti on task completion
-- Light, dark, and system theme (Settings → Theme)
+- Light, dark, retro (NES-style), and system theme (Settings → Theme)
+- Focus mode — one click hides everything except your top 3 Todo items
 - Optional GitHub Gist sync for cloud backup
 
 ## Getting Started
@@ -48,4 +49,5 @@ All data is saved locally in `localStorage` with no backend required. Keys used:
 | `todo-app-tasks-{mode}` | Task list for the given mode |
 | `todo-app-projects-{mode}` | Project list for the given mode |
 | `urgencySettings` | Warning/critical hour thresholds |
-| `todo-app-theme` | Theme preference (`light`, `dark`, or `system`) |
+| `todo-app-theme` | Theme preference (`light`, `dark`, `retro`, or `system`) |
+| `todo-app-focus` | Focus mode on/off |

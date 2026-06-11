@@ -1,8 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Press+Start+2P&family=VT323&display=swap');
 
 /* ── Design tokens ── */
 :root {
   color-scheme: light;
+
+  --font-body: 'Poppins', sans-serif;
+  --font-display: 'Poppins', sans-serif;
+
+  --radius: 6px;
+  --radius-lg: 8px;
+  --radius-sm: 5px;
+  --radius-xs: 4px;
+  --radius-pill: 20px;
+  --border-w: 1px;
 
   --color-bg: #f5f5f5;
   --color-surface: #ffffff;
@@ -85,6 +95,64 @@
   --urgency-red-border: #5c333a;
 }
 
+/* NES-inspired: pixel fonts, square corners, chunky borders, hard shadows */
+[data-theme='retro'] {
+  color-scheme: dark;
+
+  --font-body: 'VT323', monospace;
+  --font-display: 'Press Start 2P', monospace;
+
+  --radius: 0;
+  --radius-lg: 0;
+  --radius-sm: 0;
+  --radius-xs: 0;
+  --radius-pill: 0;
+  --border-w: 2px;
+
+  --color-bg: #0f0f23;
+  --color-surface: #1a1a3a;
+  --color-text: #f0f0e8;
+
+  --color-border: #34346a;
+  --color-border-strong: #4a4a8a;
+  --color-border-hover: #6a6ab8;
+
+  --color-muted: #7878a8;
+  --color-faint: #606090;
+  --color-secondary-text: #a8a8d0;
+  --color-label: #c8c8e8;
+  --color-icon: #8888b8;
+  --color-heading: #fcbf28;
+
+  --color-accent: #d82800;
+  --color-accent-text: #ffffff;
+  --color-accent-hover: #f83800;
+  --color-accent-active: #a82000;
+
+  --color-hover-bg: #26264e;
+  --color-divider: #2a2a52;
+  --color-subtle-divider: #232347;
+
+  --color-delete: #f83800;
+  --color-success: #58d854;
+  --color-streak: #fcbf28;
+
+  --shadow-dropdown: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  --color-complete-glow: rgba(88, 216, 84, 0.5);
+
+  --urgency-yellow-bg: #4a3b00;
+  --urgency-yellow-text: #fcbf28;
+  --urgency-yellow-border: #fcbf28;
+  --urgency-red-bg: #4a0e00;
+  --urgency-red-text: #ff8a7a;
+  --urgency-red-border: #d82800;
+}
+
+/* VT323 renders small for its em size; scale the rem base up to compensate */
+html[data-theme='retro'] {
+  font-size: 18px;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -92,7 +160,7 @@
 }
 
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   background: var(--color-bg);
   color: var(--color-text);
   min-height: 100vh;
@@ -114,9 +182,19 @@ body {
 }
 
 .app-title {
+  font-family: var(--font-display);
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+[data-theme='retro'] .app-title {
+  font-size: 1.125rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+  color: var(--color-heading);
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
 }
 
 .streak-count {
@@ -124,6 +202,15 @@ body {
   font-weight: 600;
   color: var(--color-streak);
   margin-top: 0.2rem;
+}
+
+.streak-count--score {
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  margin-top: 0.5rem;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
 }
 
 /* ── Settings ── */
@@ -137,8 +224,8 @@ body {
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border: var(--border-w) solid var(--color-border);
+  border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-icon);
   cursor: pointer;
@@ -157,8 +244,8 @@ body {
   width: 220px;
   max-width: calc(100vw - 2rem);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border: var(--border-w) solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 1rem;
   box-shadow: var(--shadow-dropdown);
   z-index: 100;
@@ -192,8 +279,8 @@ body {
 .settings-input {
   width: 64px;
   padding: 0.3rem 0.5rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 5px;
+  border: var(--border-w) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
   font-size: 0.875rem;
   font-family: inherit;
   background: var(--color-surface);
@@ -217,7 +304,7 @@ body {
   background: var(--color-accent);
   color: var(--color-accent-text);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   font-weight: 500;
   font-family: inherit;
@@ -237,15 +324,17 @@ body {
 /* ── Theme picker ── */
 .theme-picker {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 6px;
+  border: var(--border-w) solid var(--color-border-strong);
+  border-radius: var(--radius);
   overflow: hidden;
   width: fit-content;
 }
 
 .theme-btn {
-  padding: 0.3rem 0.75rem;
+  flex: 1;
+  padding: 0.3rem 0.5rem;
   background: var(--color-surface);
   border: none;
   font-size: 0.8125rem;
@@ -275,8 +364,8 @@ body {
 .add-input {
   flex: 1;
   padding: 0.625rem 0.875rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 6px;
+  border: var(--border-w) solid var(--color-border-strong);
+  border-radius: var(--radius);
   font-size: 0.9375rem;
   font-family: inherit;
   background: var(--color-surface);
@@ -294,7 +383,7 @@ body {
   background: var(--color-accent);
   color: var(--color-accent-text);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius);
   font-size: 0.9375rem;
   font-weight: 500;
   font-family: inherit;
@@ -316,8 +405,8 @@ body {
   display: flex;
   gap: 0;
   margin-bottom: 1rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 6px;
+  border: var(--border-w) solid var(--color-border-strong);
+  border-radius: var(--radius);
   overflow: hidden;
   width: fit-content;
 }
@@ -352,8 +441,8 @@ body {
 
 .filter-btn {
   padding: 0.3125rem 0.875rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 20px;
+  border: var(--border-w) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
   background: var(--color-surface);
   font-size: 0.8125rem;
   font-family: inherit;
@@ -387,15 +476,24 @@ body {
   margin-bottom: 0.5rem;
 }
 
+[data-theme='retro'] .section-heading {
+  font-family: var(--font-display);
+  font-size: 0.5625rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+}
+
 /* ── Task item ── */
 .task-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.625rem;
   padding: 0.5625rem 0.75rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border: var(--border-w) solid var(--color-border);
+  border-radius: var(--radius);
   margin-bottom: 0.3125rem;
   transition: border-color 0.15s;
   min-height: 2.5rem;
@@ -465,7 +563,7 @@ body {
   background: none;
   color: var(--color-border-hover);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   opacity: 0;
   transition: color 0.15s, opacity 0.15s;
   padding: 0;
@@ -548,7 +646,7 @@ body {
   color: var(--color-heading);
   font-size: 0.75rem;
   padding: 0.25rem 0.375rem;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   line-height: 1;
 }
 
@@ -569,8 +667,8 @@ body {
   top: calc(100% + 4px);
   z-index: 100;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border: var(--border-w) solid var(--color-border);
+  border-radius: var(--radius);
   box-shadow: var(--shadow-dropdown);
   min-width: 130px;
   overflow: hidden;
@@ -611,8 +709,8 @@ body {
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border: var(--border-w) solid var(--color-border);
+  border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-icon);
   cursor: pointer;
@@ -634,8 +732,8 @@ body {
 .settings-token-input {
   width: 100%;
   padding: 0.3rem 0.5rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 5px;
+  border: var(--border-w) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   font-family: inherit;
   background: var(--color-surface);
@@ -695,8 +793,8 @@ body {
 
 /* ── Project card (Work mode) ── */
 .project-card {
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border: var(--border-w) solid var(--color-border);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
   margin-bottom: 0.75rem;
   position: relative;
@@ -764,7 +862,7 @@ body {
   font-size: 0.875rem;
   line-height: 1;
   padding: 0.2rem 0.35rem;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: color 0.15s;
 }
 
@@ -839,4 +937,67 @@ body {
   height: 1px;
   background: var(--color-divider);
   margin: 0.25rem 0;
+}
+
+/* ── Focus mode ── */
+.pull-btn.focus-btn--active,
+.pull-btn.focus-btn--active:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.focus-more {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 0.625rem 0;
+}
+
+/* ── Retro: hard offset shadows on raised surfaces ── */
+[data-theme='retro'] .task-item,
+[data-theme='retro'] .project-card,
+[data-theme='retro'] .settings-btn,
+[data-theme='retro'] .pull-btn,
+[data-theme='retro'] .add-btn,
+[data-theme='retro'] .mode-toggle,
+[data-theme='retro'] .theme-picker {
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+}
+
+[data-theme='retro'] .add-btn:active {
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+  transform: translate(2px, 2px);
+}
+
+/* ── Retro: "+100" score pop on completion ── */
+.score-pop {
+  display: none;
+}
+
+[data-theme='retro'] .score-pop {
+  display: block;
+  position: absolute;
+  top: -12px;
+  right: 10px;
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  color: var(--color-streak);
+  text-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+  z-index: 10;
+  animation: scorePop 0.6s ease-out forwards;
+}
+
+@keyframes scorePop {
+  0%   { opacity: 0; transform: translateY(6px); }
+  25%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-18px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='retro'] .score-pop {
+    animation: none;
+    opacity: 0;
+  }
 }

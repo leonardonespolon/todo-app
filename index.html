@@ -9,7 +9,7 @@
       (function () {
         try {
           var saved = localStorage.getItem('todo-app-theme');
-          var theme = saved === 'light' || saved === 'dark'
+          var theme = saved === 'light' || saved === 'dark' || saved === 'retro'
             ? saved
             : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
           document.documentElement.dataset.theme = theme;

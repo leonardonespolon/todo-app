@@ -7,7 +7,10 @@ APP UI. Task management workspace. Utility language. Calm surface hierarchy.
 
 ## Color Tokens
 
-Tokens are defined as CSS custom properties in `src/App.css` (`:root` for light, `[data-theme='dark']` for dark). The theme attribute is set on `<html>` by `useTheme` (and a pre-paint script in `index.html`); preference is `light`/`dark`/`system`, persisted as `todo-app-theme`.
+Tokens are defined as CSS custom properties in `src/App.css` (`:root` for light, `[data-theme='dark']` and `[data-theme='retro']` for the other themes). The theme attribute is set on `<html>` by `useTheme` (and a pre-paint script in `index.html`); preference is `light`/`dark`/`retro`/`system`, persisted as `todo-app-theme`. Shape (`--radius-*`, `--border-w`) and font (`--font-body`, `--font-display`) are also tokens so themes can restyle structure, not just color.
+
+### Retro theme
+NES-inspired: 'Press Start 2P' for display text, 'VT323' for body (root font-size bumped to 18px to compensate for VT323's small render), square corners (`--radius-*: 0`), 2px borders, hard offset shadows, dark navy palette with NES red accent (`#d82800`) and coin gold headings (`#fcbf28`). The streak counter renders as a zero-padded `SCORE` (100 pts/task) and completing a task pops a `+100` (`.score-pop`, hidden in other themes). The existing Mario sound effects are the native soundtrack for this theme.
 
 | Token | Light | Dark | Usage |
 |-------|-------|------|-------|

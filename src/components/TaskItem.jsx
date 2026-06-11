@@ -105,6 +105,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
 
   return (
     <div className={`task-item${completing ? ' task-item--completing' : ''}${urgencyClass}`}>
+      {completing && <span className="score-pop" aria-hidden="true">+100</span>}
       <input
         ref={checkboxRef}
         type="checkbox"

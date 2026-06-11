@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const THEME_KEY = 'todo-app-theme';
-const VALID = ['light', 'dark', 'system'];
+const VALID = ['light', 'dark', 'retro', 'system'];
 
 function loadTheme() {
   const saved = localStorage.getItem(THEME_KEY);
@@ -16,13 +16,19 @@ function systemTheme() {
   }
 }
 
+function resolve(theme) {
+  return theme === 'system' ? systemTheme() : theme;
+}
+
 export function useTheme() {
   const [theme, setThemeState] = useState(loadTheme);
+  const [resolvedTheme, setResolvedTheme] = useState(() => resolve(loadTheme()));
 
   useEffect(() => {
     function apply() {
-      const resolved = theme === 'system' ? systemTheme() : theme;
+      const resolved = resolve(theme);
       document.documentElement.dataset.theme = resolved;
+      setResolvedTheme(resolved);
     }
     apply();
 
@@ -43,5 +49,5 @@ export function useTheme() {
     localStorage.setItem(THEME_KEY, next);
   }
 
-  return { theme, setTheme };
+  return { theme, setTheme, resolvedTheme };
 }
