@@ -3,6 +3,7 @@ import { Settings, RefreshCw } from 'lucide-react';
 import { useTasks } from './hooks/useTasks';
 import { useProjects } from './hooks/useProjects';
 import { useGistSync } from './hooks/useGistSync';
+import { useTheme } from './hooks/useTheme';
 import TaskList from './components/TaskList';
 import './App.css';
 
@@ -26,6 +27,7 @@ export default function App() {
   const { tasks, addTask, addSubTask, editTask, deleteTask, deleteProjectTasks, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks(mode);
   const { projects, addProject, renameProject, moveProject, completeProject, uncompleteProject, deleteProject, resetProjects } = useProjects(mode);
   const { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave } = useGistSync();
+  const { theme, setTheme } = useTheme();
   const [urgencySettings, setUrgencySettings] = useState(loadUrgencySettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState(urgencySettings);
@@ -238,6 +240,21 @@ export default function App() {
                 </label>
                 {settingsError && <p className="settings-error">{settingsError}</p>}
                 <button className="settings-save" onClick={saveSettings}>Save</button>
+
+                <hr className="settings-divider" />
+                <p className="settings-title">Theme</p>
+                <div className="theme-picker" role="group" aria-label="Theme">
+                  {['light', 'dark', 'system'].map(t => (
+                    <button
+                      key={t}
+                      className={`theme-btn${theme === t ? ' theme-btn--active' : ''}`}
+                      onClick={() => setTheme(t)}
+                      aria-pressed={theme === t}
+                    >
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </button>
+                  ))}
+                </div>
 
                 <hr className="settings-divider" />
                 <p className="settings-title">Gist Sync</p>

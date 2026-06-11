@@ -7,24 +7,28 @@ APP UI. Task management workspace. Utility language. Calm surface hierarchy.
 
 ## Color Tokens
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--color-primary` | `#1a1a1a` | Text, buttons, checkbox accent, active filter |
-| `--color-surface` | `#ffffff` | Cards, inputs, dropdowns |
-| `--color-bg` | `#f5f5f5` | Page background |
-| `--color-border` | `#e8e8e8` | Card borders (default) |
-| `--color-border-hover` | `#ccc` | Card borders (hover) |
-| `--color-muted` | `#aaa` | Completed task text, timestamps |
-| `--color-faint` | `#bbb` | Empty state text, completed timestamps |
-| `--color-secondary-text` | `#666` | Filter buttons, labels |
-| `--color-delete` | `#dc2626` | Delete icon hover, error text |
-| `--color-complete-glow` | `rgba(34, 197, 94, 0.35)` | Completion animation glow |
+Tokens are defined as CSS custom properties in `src/App.css` (`:root` for light, `[data-theme='dark']` for dark). The theme attribute is set on `<html>` by `useTheme` (and a pre-paint script in `index.html`); preference is `light`/`dark`/`system`, persisted as `todo-app-theme`.
+
+| Token | Light | Dark | Usage |
+|-------|-------|------|-------|
+| `--color-bg` | `#f5f5f5` | `#161618` | Page background |
+| `--color-surface` | `#ffffff` | `#1f1f23` | Cards, inputs, dropdowns |
+| `--color-text` | `#1a1a1a` | `#e8e8e8` | Primary text |
+| `--color-accent` | `#1a1a1a` | `#e8e8e8` | Buttons, checkbox accent, active pills (text: `--color-accent-text`) |
+| `--color-border` | `#e8e8e8` | `#2e2e33` | Card borders (default) |
+| `--color-border-strong` | `#d4d4d4` | `#3a3a40` | Input and toggle borders |
+| `--color-border-hover` | `#ccc` | `#4a4a52` | Card borders (hover) |
+| `--color-muted` | `#aaa` | `#6b6b73` | Completed task text, timestamps |
+| `--color-faint` | `#bbb` | `#5c5c64` | Empty state text |
+| `--color-secondary-text` | `#666` | `#a0a0a8` | Filter buttons, labels |
+| `--color-delete` | `#dc2626` | `#ef4444` | Delete icon hover, error text |
+| `--color-complete-glow` | `rgba(34,197,94,.35)` | `rgba(34,197,94,.3)` | Completion animation glow |
 
 ### Urgency Colors
-| Level | Background | Text | Border |
-|-------|-----------|------|--------|
-| Warning (yellow) | `#FFF3CD` | `#856404` | `#ffeeba` |
-| Critical (red) | `#F8D7DA` | `#721c24` | `#f5c6cb` |
+| Level | Light (bg / text / border) | Dark (bg / text / border) |
+|-------|---------------------------|---------------------------|
+| Warning (yellow) | `#FFF3CD` / `#856404` / `#ffeeba` | `#3d3520` / `#f0d77a` / `#564a26` |
+| Critical (red) | `#F8D7DA` / `#721c24` / `#f5c6cb` | `#42272b` / `#f3a6ae` / `#5c333a` |
 
 ---
 
