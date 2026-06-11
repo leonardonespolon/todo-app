@@ -14,10 +14,6 @@ function formatTimestamp(ts) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + time;
 }
 
-const URGENCY_STYLES = {
-  red: { background: '#F8D7DA', color: '#721c24', borderColor: '#f5c6cb' },
-  yellow: { background: '#FFF3CD', color: '#856404', borderColor: '#ffeeba' },
-};
 
 export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncomplete, onMove, urgencySettings, todayCount, isSubTask }) {
   const [editing, setEditing] = useState(false);
@@ -45,7 +41,7 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
   const urgency = (!isDone && task.listId === 'todo')
     ? getUrgency(task.createdAt, warning, critical)
     : null;
-  const urgencyStyle = urgency ? URGENCY_STYLES[urgency] : {};
+  const urgencyClass = urgency ? ` task-item--urgency-${urgency}` : '';
 
   function startEdit() {
     setEditText(task.text);
@@ -108,7 +104,8 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
   }
 
   return (
-    <div className={`task-item${completing ? ' task-item--completing' : ''}`} style={urgencyStyle}>
+    <div className={`task-item${completing ? ' task-item--completing' : ''}${urgencyClass}`}>
+      {completing && <span className="score-pop" aria-hidden="true">+100</span>}
       <input
         ref={checkboxRef}
         type="checkbox"

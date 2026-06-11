@@ -32,29 +32,29 @@ function renderTask(task) {
 }
 
 describe('TaskItem urgency', () => {
-  it('applies urgency style to a todo task that is old enough', () => {
+  it('applies urgency class to a todo task that is old enough', () => {
     const { container } = renderTask(makeTask({ listId: 'todo' }));
     const card = container.querySelector('.task-item');
-    // Critical tasks get a red background
-    expect(card.style.background).toBeTruthy();
+    // Critical tasks get the red urgency class
+    expect(card.classList.contains('task-item--urgency-red')).toBe(true);
   });
 
-  it('does NOT apply urgency style to a watch task regardless of age', () => {
+  it('does NOT apply urgency class to a watch task regardless of age', () => {
     const { container } = renderTask(makeTask({ listId: 'watch' }));
     const card = container.querySelector('.task-item');
-    expect(card.style.background).toBe('');
+    expect(card.className).not.toMatch(/task-item--urgency/);
   });
 
-  it('does NOT apply urgency style to a later task regardless of age', () => {
+  it('does NOT apply urgency class to a later task regardless of age', () => {
     const { container } = renderTask(makeTask({ listId: 'later' }));
     const card = container.querySelector('.task-item');
-    expect(card.style.background).toBe('');
+    expect(card.className).not.toMatch(/task-item--urgency/);
   });
 
-  it('does NOT apply urgency style to a completed todo task', () => {
+  it('does NOT apply urgency class to a completed todo task', () => {
     const { container } = renderTask(makeTask({ listId: 'todo', completedAt: Date.now() }));
     const card = container.querySelector('.task-item');
-    expect(card.style.background).toBe('');
+    expect(card.className).not.toMatch(/task-item--urgency/);
   });
 });
 
