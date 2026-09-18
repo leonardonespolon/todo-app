@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { DndContext, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core';
-import { ArrowRight, Trash2 } from 'lucide-react';
+import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core';
+import { ArrowRight, Trash2, Pencil } from 'lucide-react';
 import TaskItem from './TaskItem';
 import { getUrgency } from '../utils/getUrgency';
 
 function DraggableTask({ task, children }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   const style = {
+    // Lets the page scroll on touch until the TouchSensor's long-press fires.
+    touchAction: 'manipulation',
     ...(transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : {}),
     ...(isDragging ? { opacity: 0.5, zIndex: 999 } : {}),
   };
@@ -125,6 +127,15 @@ function ProjectCard({
 
         {!renaming && (
           <div className="project-card-controls">
+            {!isDone && (
+              <button
+                className="project-card-action"
+                onClick={startRename}
+                aria-label="Rename project"
+              >
+                <Pencil size={15} />
+              </button>
+            )}
             {!isDone && (
               <div ref={moveRef} style={{ position: 'relative' }}>
                 <button
@@ -292,8 +303,11 @@ export default function TaskList({
   onDeleteProject,
 }) {
   const { warning, critical } = urgencySettings;
+  // Mouse drags start after 8px of movement. Touch drags need a 250ms hold so a
+  // vertical swipe over a task scrolls the page instead of picking the task up.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
   const [newText, setNewText] = useState('');
   const [collapse, setCollapse] = useState(loadCollapse);

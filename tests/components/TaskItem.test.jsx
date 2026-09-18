@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import TaskItem from '../../src/components/TaskItem';
 
 const urgencySettings = { warning: 1, critical: 2 }; // 1h/2h so we can test with old tasks
@@ -62,5 +62,19 @@ describe('TaskItem rendering', () => {
   it('renders the task text', () => {
     renderTask(makeTask({ text: 'Buy groceries' }));
     expect(screen.getByText(/Buy groceries/)).toBeInTheDocument();
+  });
+});
+
+describe('edit button', () => {
+  it('shows an Edit button on active tasks that opens inline editing', () => {
+    renderTask(makeTask());
+    fireEvent.click(screen.getByLabelText('Edit task'));
+    expect(screen.getByDisplayValue('Test task')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Edit task')).not.toBeInTheDocument();
+  });
+
+  it('hides the Edit button on completed tasks', () => {
+    renderTask(makeTask({ completedAt: Date.now() }));
+    expect(screen.queryByLabelText('Edit task')).not.toBeInTheDocument();
   });
 });

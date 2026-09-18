@@ -566,7 +566,8 @@ body {
 }
 
 .task-delete,
-.task-move {
+.task-move,
+.task-edit {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -578,21 +579,16 @@ body {
   color: var(--color-border-hover);
   cursor: pointer;
   border-radius: var(--radius-xs);
-  opacity: 0;
   transition: color 0.15s, opacity 0.15s;
   padding: 0;
-}
-
-.task-item:hover .task-delete,
-.task-item:hover .task-move {
-  opacity: 1;
 }
 
 .task-delete:hover {
   color: var(--color-delete);
 }
 
-.task-move:hover {
+.task-move:hover,
+.task-edit:hover {
   color: var(--color-secondary-text);
 }
 
@@ -860,12 +856,7 @@ body {
   align-items: center;
   gap: 0.25rem;
   flex-shrink: 0;
-  opacity: 0;
   transition: opacity 0.15s;
-}
-
-.project-card-header:hover .project-card-controls {
-  opacity: 1;
 }
 
 .project-card-action {
@@ -1013,5 +1004,114 @@ body {
   [data-theme='retro'] .score-pop {
     animation: none;
     opacity: 0;
+  }
+}
+
+/* ── Hover-reveal controls (pointer devices only) ──
+   On touch devices there is no hover, so the controls stay visible. */
+@media (hover: hover) {
+  .task-delete,
+  .task-move,
+  .task-edit,
+  .project-card-controls {
+    opacity: 0;
+  }
+
+  .task-item:hover .task-delete,
+  .task-item:hover .task-move,
+  .task-item:hover .task-edit,
+  .task-item:focus-within .task-delete,
+  .task-item:focus-within .task-move,
+  .task-item:focus-within .task-edit,
+  .project-card-header:hover .project-card-controls,
+  .project-card-header:focus-within .project-card-controls {
+    opacity: 1;
+  }
+}
+
+/* ── Touch targets (coarse pointers) ── */
+@media (pointer: coarse) {
+  .task-item {
+    gap: 0.375rem;
+    padding-right: 0.375rem;
+  }
+
+  .task-checkbox {
+    width: 22px;
+    height: 22px;
+  }
+
+  .task-delete,
+  .task-move,
+  .task-edit {
+    width: 40px;
+    height: 40px;
+  }
+
+  .project-card-action,
+  .section-collapse-btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .mode-btn {
+    min-height: 40px;
+    padding: 0.5rem 1.25rem;
+  }
+
+  .add-btn,
+  .settings-save {
+    min-height: 44px;
+  }
+
+  .move-dropdown-item,
+  .theme-option {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  /* iOS zooms the page when a focused input's font is under 16px. */
+  .add-input,
+  .task-edit-input,
+  .project-name-input,
+  .settings-input,
+  .settings-token-input {
+    font-size: 16px;
+  }
+}
+
+/* ── Narrow screens ── */
+@media (max-width: 480px) {
+  .app {
+    padding: 1.25rem 1rem;
+  }
+
+  .app-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+  }
+
+  .mode-toggle {
+    width: 100%;
+  }
+
+  .mode-btn {
+    flex: 1;
+  }
+
+  .settings-dropdown {
+    width: min(300px, calc(100vw - 2rem));
+  }
+
+  /* Let long "created · done · duration" stamps wrap under the task text
+     instead of pushing the controls off-screen. */
+  .task-text .task-timestamp {
+    display: block;
+    margin-left: 0;
+    white-space: normal;
   }
 }

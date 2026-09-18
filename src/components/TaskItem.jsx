@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, ArrowRight } from 'lucide-react';
+import { Trash2, ArrowRight, Pencil } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getUrgency } from '../utils/getUrgency';
 import { playExplosion } from '../utils/playExplosion';
@@ -134,6 +134,16 @@ export default function TaskItem({ task, onEdit, onDelete, onComplete, onUncompl
             <span className="task-timestamp"> · done {formatTimestamp(task.completedAt)} · {(( task.completedAt - task.createdAt) / 3600000).toFixed(1)}h</span>
           )}
         </span>
+      )}
+      {!isDone && !editing && (
+        <button
+          className="task-edit"
+          onClick={startEdit}
+          aria-label="Edit task"
+          tabIndex={0}
+        >
+          <Pencil size={15} />
+        </button>
       )}
       {!isDone && onMove && !isSubTask && (
         <div ref={moveRef} style={{ position: 'relative', flexShrink: 0 }}>

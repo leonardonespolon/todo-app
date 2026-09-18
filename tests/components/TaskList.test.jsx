@@ -177,3 +177,22 @@ describe('projects in every mode', () => {
     expect(screen.getByText('Todo').querySelector('.section-count')).toHaveTextContent('2');
   });
 });
+
+describe('project rename button', () => {
+  it('opens the rename field when the Rename button is clicked', () => {
+    const project = { id: 'p1', name: 'Garden', listId: 'todo', completedAt: null, createdAt: Date.now() };
+    render(
+      <TaskList
+        tasks={[]}
+        projects={[project]}
+        onAdd={noop} onAddSubTask={noop} onEdit={noop} onDelete={noop}
+        onComplete={noop} onUncomplete={noop} onMove={noop}
+        urgencySettings={urgencySettings}
+        onAddProject={noop} onRenameProject={noop} onMoveProject={noop}
+        onCompleteProject={noop} onUncompleteProject={noop} onDeleteProject={noop}
+      />
+    );
+    fireEvent.click(screen.getByLabelText('Rename project'));
+    expect(screen.getByDisplayValue('Garden')).toBeInTheDocument();
+  });
+});
