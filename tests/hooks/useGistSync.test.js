@@ -257,3 +257,66 @@ describe('flushSave', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+// ─── overlapping saves ───────────────────────────────────────────────────────
+
+describe('overlapping saves', () => {
+  it('sends the newest payload after an in-flight save instead of dropping it', async () => {
+    vi.useFakeTimers();
+    localStorage.setItem('todo-gist-token', 'ghp_test');
+    localStorage.setItem('todo-gist-id', 'gist123');
+
+    const sent = [];
+    let finishFirst;
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url, opts) => {
+      sent.push(JSON.parse(opts.body).files['todo-app-tasks.json'].content);
+      if (sent.length === 1) {
+        // First save hangs until we release it.
+        return new Promise(resolve => {
+          finishFirst = () => resolve({ ok: true, json: async () => ({}) });
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
+
+    const { result } = renderHook(() => useGistSync());
+    act(() => result.current.scheduleSave({ v: 1 }));
+    await act(async () => { vi.advanceTimersByTime(1500); }); // save #1 starts and hangs
+    expect(sent).toEqual(['{"v":1}']);
+
+    act(() => result.current.scheduleSave({ v: 2 }));
+    await act(async () => { vi.advanceTimersByTime(1500); }); // debounce fires while #1 in flight
+    expect(sent).toHaveLength(1); // must queue, not send concurrently
+    expect(result.current.syncStatus).not.toBe('synced');
+
+    await act(async () => { finishFirst(); });
+    await act(async () => { vi.advanceTimersByTime(100); }); // let the idle poll wake up
+
+    expect(sent).toEqual(['{"v":1}', '{"v":2}']);
+    expect(result.current.syncStatus).toBe('synced');
+  });
+
+  it('flushSave without a payload sends the pending debounced payload once', async () => {
+    vi.useFakeTimers();
+    localStorage.setItem('todo-gist-token', 'ghp_test');
+    localStorage.setItem('todo-gist-id', 'gist123');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({}) });
+
+    const { result } = renderHook(() => useGistSync());
+    act(() => result.current.scheduleSave({ v: 1 }));
+    await act(async () => { await result.current.flushSave(); });
+    await act(async () => { vi.advanceTimersByTime(2000); });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetch.mock.calls[0][1].body).files['todo-app-tasks.json'].content).toBe('{"v":1}');
+  });
+
+  it('flushSave without a payload is a no-op when nothing is pending', async () => {
+    localStorage.setItem('todo-gist-token', 'ghp_test');
+    localStorage.setItem('todo-gist-id', 'gist123');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { result } = renderHook(() => useGistSync());
+    await act(async () => { await result.current.flushSave(); });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});

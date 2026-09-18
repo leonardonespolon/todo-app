@@ -805,7 +805,7 @@ body {
   align-items: center;
 }
 
-/* ── Project card (Work mode) ── */
+/* ── Project card ── */
 .project-card {
   border: var(--border-w) solid var(--color-border);
   border-radius: var(--radius-lg);

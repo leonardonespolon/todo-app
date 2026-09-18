@@ -132,3 +132,48 @@ describe('section ordering', () => {
     expect(headings[3]).toMatch(/Completed/);
   });
 });
+
+describe('projects in every mode', () => {
+  function renderWithProjects(tasks, projects) {
+    return render(
+      <TaskList
+        tasks={tasks}
+        projects={projects}
+        onAdd={noop}
+        onAddSubTask={noop}
+        onEdit={noop}
+        onDelete={noop}
+        onComplete={noop}
+        onUncomplete={noop}
+        onMove={noop}
+        urgencySettings={urgencySettings}
+        onAddProject={noop}
+        onRenameProject={noop}
+        onMoveProject={noop}
+        onCompleteProject={noop}
+        onUncompleteProject={noop}
+        onDeleteProject={noop}
+      />
+    );
+  }
+
+  it('renders the new-project row without a mode prop', () => {
+    renderWithProjects([], []);
+    expect(screen.getByPlaceholderText('New project...')).toBeInTheDocument();
+  });
+
+  it('renders project cards with their sub-tasks regardless of mode', () => {
+    const project = { id: 'p1', name: 'Garden', listId: 'todo', completedAt: null, createdAt: Date.now() };
+    const sub = makeTask({ text: 'Buy seeds', projectId: 'p1', listId: undefined });
+    renderWithProjects([sub], [project]);
+    expect(screen.getByText('Garden')).toBeInTheDocument();
+    expect(screen.getByText('Buy seeds')).toBeInTheDocument();
+    expect(screen.getByText('0/1')).toBeInTheDocument();
+  });
+
+  it('counts todo projects in the Todo section count', () => {
+    const project = { id: 'p1', name: 'Garden', listId: 'todo', completedAt: null, createdAt: Date.now() };
+    renderWithProjects([makeTask()], [project]);
+    expect(screen.getByText('Todo').querySelector('.section-count')).toHaveTextContent('2');
+  });
+});

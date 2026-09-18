@@ -26,7 +26,7 @@ function DroppableSection({ id, children }) {
   );
 }
 
-// Project card for Work mode — shows sub-tasks inline, has its own completion checkbox
+// Project card — shows sub-tasks inline, has its own completion checkbox
 function ProjectCard({
   project,
   subTasks,
@@ -272,7 +272,6 @@ function sortByCreated(tasks) {
 }
 
 export default function TaskList({
-  mode,
   focusMode,
   tasks,
   projects,
@@ -335,17 +334,16 @@ export default function TaskList({
 
   const visibleCompleted = [...completedStandalone].sort((a, b) => b.completedAt - a.completedAt);
 
-  // Work mode: projects bucketed by section
+  // Projects bucketed by section, with their sub-tasks
   const subTaskMap = {};
-  if (mode === 'work') {
-    for (const t of tasks.filter(t => t.projectId)) {
-      if (!subTaskMap[t.projectId]) subTaskMap[t.projectId] = [];
-      subTaskMap[t.projectId].push(t);
-    }
+  for (const t of tasks) {
+    if (!t.projectId) continue;
+    if (!subTaskMap[t.projectId]) subTaskMap[t.projectId] = [];
+    subTaskMap[t.projectId].push(t);
   }
 
-  const activeProjects = (mode === 'work' ? projects : []).filter(p => !p.completedAt);
-  const completedProjects = (mode === 'work' ? projects : []).filter(p => p.completedAt !== null);
+  const activeProjects = projects.filter(p => !p.completedAt);
+  const completedProjects = projects.filter(p => p.completedAt !== null);
 
   const todoProjects = activeProjects.filter(p => p.listId === 'todo');
   const watchProjects = activeProjects.filter(p => p.listId === 'watch');
@@ -439,7 +437,7 @@ export default function TaskList({
           <button type="submit" className="add-btn">Add</button>
         </form>
         {focusTasks.map(t => renderTask(t, false))}
-        {mode === 'work' && focusProjects.map(renderProjectCard)}
+        {focusProjects.map(renderProjectCard)}
         {shown === 0 && <p className="empty-state">Nothing to focus on. Add a task above.</p>}
         {hidden > 0 && (
           <p className="focus-more">+{hidden} more in Todo</p>
@@ -467,10 +465,10 @@ export default function TaskList({
             </form>
             <DroppableSection id="todo">
               {visibleTodo.map(t => renderTask(t, true))}
-              {mode === 'work' && todoProjects.map(renderProjectCard)}
+              {todoProjects.map(renderProjectCard)}
               {totalTodo === 0 && <p className="empty-state">No tasks. Add one above.</p>}
             </DroppableSection>
-            {mode === 'work' && <NewProjectRow onAdd={onAddProject} />}
+            <NewProjectRow onAdd={onAddProject} />
           </section>
 
         {/* ── WATCH ── */}
@@ -487,7 +485,7 @@ export default function TaskList({
                 ? <p className="empty-state">Move tasks here to keep an eye on them.</p>
                 : <>
                     {visibleWatch.map(t => renderTask(t, true))}
-                    {mode === 'work' && watchProjects.map(renderProjectCard)}
+                    {watchProjects.map(renderProjectCard)}
                   </>
             )}
           </DroppableSection>
@@ -507,7 +505,7 @@ export default function TaskList({
                 ? <p className="empty-state">Move tasks here to tackle another time.</p>
                 : <>
                     {visibleLater.map(t => renderTask(t, true))}
-                    {mode === 'work' && laterProjects.map(renderProjectCard)}
+                    {laterProjects.map(renderProjectCard)}
                   </>
             )}
           </DroppableSection>
@@ -525,7 +523,7 @@ export default function TaskList({
             {!collapse.completed && (
               <>
                 {visibleCompleted.map(t => renderTask(t, false))}
-                {mode === 'work' && completedProjects.map(renderProjectCard)}
+                {completedProjects.map(renderProjectCard)}
               </>
             )}
           </section>

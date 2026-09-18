@@ -49,8 +49,9 @@ export function useGistSync() {
     }
   }
 
+  // Performs one save. Callers must serialise access via runPendingSave so two
+  // saves never overlap and the newest payload is never dropped.
   async function doSave(payload) {
-    if (isSavingRef.current) return;
     isSavingRef.current = true;
     const tok = tokenRef.current;
     try {
@@ -78,6 +79,25 @@ export function useGistSync() {
       }
     } finally {
       isSavingRef.current = false;
+    }
+  }
+
+  // Waits for any in-flight save, then uploads whatever payload is pending at
+  // that moment. If several callers are waiting, only the first one to wake
+  // finds a payload; the rest see null and return, so each state is sent once.
+  async function runPendingSave() {
+    await waitForSaveIdle();
+    const payload = pendingTasksRef.current;
+    if (payload === null) return;
+    pendingTasksRef.current = null;
+    setSyncStatus('syncing');
+    setSyncError('');
+    try {
+      await doSave(payload);
+      setSyncStatus('synced');
+    } catch (e) {
+      setSyncStatus('error');
+      setSyncError(e.message);
     }
   }
 
@@ -128,32 +148,16 @@ export function useGistSync() {
     pendingTasksRef.current = payload;
     clearTimeout(debounceRef.current);
     setSyncStatus('pending');
-    debounceRef.current = setTimeout(async () => {
-      setSyncStatus('syncing');
-      setSyncError('');
-      try {
-        await doSave(pendingTasksRef.current);
-        setSyncStatus('synced');
-      } catch (e) {
-        setSyncStatus('error');
-        setSyncError(e.message);
-      }
-    }, 1500);
+    debounceRef.current = setTimeout(runPendingSave, 1500);
   }
 
+  // Saves now instead of waiting for the debounce. With a payload it replaces
+  // whatever was pending; without one it flushes the pending payload, if any.
   async function flushSave(payload) {
     if (!tokenRef.current) return;
     clearTimeout(debounceRef.current);
-    await waitForSaveIdle(); // wait for any in-flight save to complete first
-    setSyncStatus('syncing');
-    setSyncError('');
-    try {
-      await doSave(payload);
-      setSyncStatus('synced');
-    } catch (e) {
-      setSyncStatus('error');
-      setSyncError(e.message);
-    }
+    if (payload !== undefined) pendingTasksRef.current = payload;
+    await runPendingSave();
   }
 
   return { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave };
