@@ -7,14 +7,15 @@ Supports personal/work modes, project organization, urgency indicators, and opti
 ## Features
 
 - Create, edit, complete, and reorder tasks via drag-and-drop
-- Organize tasks into projects
-- Personal and Work modes with separate task lists
+- Organize tasks into projects (available in both Personal and Work modes)
+- Personal and Work modes with separate task and project lists
 - Urgency indicators (configurable warning/critical thresholds)
 - Today filter with daily streak tracking
 - Confetti on task completion
 - Light, dark, retro (NES-style), and system theme (header theme menu)
 - Focus mode — one click hides everything except your top 3 Todo items
 - Optional GitHub Gist sync for cloud backup
+- Mobile-friendly: touch-sized controls, long-press to drag, and installable to the home screen (Share → Add to Home Screen on iOS, Install app on Android)
 
 ## Getting Started
 
@@ -37,7 +38,7 @@ npm test         # Run tests
 
 To sync tasks across devices, generate a GitHub personal access token with `gist` scope and paste it in **Settings → GitHub Gist Sync**.
 
-Your tasks are stored in two gists (one for personal, one for work) and synced automatically on load and save.
+Both modes are stored in a single private gist (`todo-app-tasks.json`) and synced automatically on load and after each change.
 
 ## Local Storage
 
@@ -51,3 +52,6 @@ All data is saved locally in `localStorage` with no backend required. Keys used:
 | `urgencySettings` | Warning/critical hour thresholds |
 | `todo-app-theme` | Theme preference (`light`, `dark`, `retro`, or `system`) |
 | `todo-app-focus` | Focus mode on/off |
+| `todo-app-section-collapse` | Collapsed state of the Watch/Later/Completed sections |
+| `todo-gist-token` | GitHub token for Gist sync (stored in plain text in the browser) |
+| `todo-gist-id` | ID of the gist holding the synced data |

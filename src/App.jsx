@@ -25,6 +25,17 @@ function loadUrgencySettings() {
   }
 }
 
+// Reads a JSON array from localStorage. A missing or corrupt entry yields []
+// rather than throwing, so bad data in one key can never take down the app.
+function readStoredList(key) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) ?? '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function loadMode() {
   return localStorage.getItem('todo-app-mode') === 'work' ? 'work' : 'personal';
 }
@@ -85,12 +96,12 @@ export default function App() {
   function buildPayload() {
     return {
       personal: {
-        tasks: JSON.parse(localStorage.getItem('todo-app-tasks-personal') ?? '[]'),
-        projects: JSON.parse(localStorage.getItem('todo-app-projects-personal') ?? '[]'),
+        tasks: readStoredList('todo-app-tasks-personal'),
+        projects: readStoredList('todo-app-projects-personal'),
       },
       work: {
-        tasks: JSON.parse(localStorage.getItem('todo-app-tasks-work') ?? '[]'),
-        projects: JSON.parse(localStorage.getItem('todo-app-projects-work') ?? '[]'),
+        tasks: readStoredList('todo-app-tasks-work'),
+        projects: readStoredList('todo-app-projects-work'),
       },
     };
   }
@@ -123,6 +134,15 @@ export default function App() {
     if (justLoadedRef.current) { justLoadedRef.current = false; return; }
     scheduleSave(buildPayload());
   }, [tasks, projects]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Push any debounced save before the page goes away so an edit made in the
+  // last 1.5s is not lost. pagehide also fires on mobile tab switches, where
+  // beforeunload does not.
+  useEffect(() => {
+    function flushOnHide() { flushSave(); }
+    window.addEventListener('pagehide', flushOnHide);
+    return () => window.removeEventListener('pagehide', flushOnHide);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     clearTimeout(syncTimerRef.current);
@@ -195,7 +215,7 @@ export default function App() {
 
   const startOfToday = new Date().setHours(0, 0, 0, 0);
   const otherMode = mode === 'personal' ? 'work' : 'personal';
-  const otherTasks = JSON.parse(localStorage.getItem(`todo-app-tasks-${otherMode}`) ?? '[]');
+  const otherTasks = readStoredList(`todo-app-tasks-${otherMode}`);
   const todayCount = [...tasks, ...otherTasks].filter(t => t.completedAt !== null && t.completedAt >= startOfToday).length;
 
   const syncLabel = (() => {
@@ -373,7 +393,6 @@ export default function App() {
       </div>
 
       <TaskList
-        mode={mode}
         focusMode={focusMode}
         tasks={tasks}
         projects={projects}
