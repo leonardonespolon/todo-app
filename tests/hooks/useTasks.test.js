@@ -202,3 +202,33 @@ describe('resetTasks', () => {
     expect(saved[0].listId).toBe('later');
   });
 });
+
+
+describe('restoreTask', () => {
+  it('re-inserts a deleted task at its original index', () => {
+    const { result } = renderHook(() => useTasks('personal'));
+    act(() => { result.current.addTask('A'); });
+    act(() => { result.current.addTask('B'); });
+    act(() => { result.current.addTask('C'); });
+    const b = result.current.tasks[1];
+    act(() => { result.current.deleteTask(b.id); });
+    expect(result.current.tasks.map(t => t.text)).toEqual(['A', 'C']);
+    act(() => { result.current.restoreTask(b, 1); });
+    expect(result.current.tasks.map(t => t.text)).toEqual(['A', 'B', 'C']);
+  });
+
+  it('does not duplicate a task that is already present', () => {
+    const { result } = renderHook(() => useTasks('personal'));
+    act(() => { result.current.addTask('A'); });
+    const a = result.current.tasks[0];
+    act(() => { result.current.restoreTask(a, 0); });
+    expect(result.current.tasks).toHaveLength(1);
+  });
+
+  it('clamps an out-of-range index to the end', () => {
+    const { result } = renderHook(() => useTasks('personal'));
+    act(() => { result.current.addTask('A'); });
+    act(() => { result.current.restoreTask({ id: 'z', text: 'Z', createdAt: 1, completedAt: null, listId: 'todo', projectId: null }, 99); });
+    expect(result.current.tasks.map(t => t.text)).toEqual(['A', 'Z']);
+  });
+});

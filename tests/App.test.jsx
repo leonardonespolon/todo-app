@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent, within } from '@testing-library/react';
 import App from '../src/App';
 
 beforeEach(() => {
@@ -58,5 +58,93 @@ describe('App gist sync', () => {
     expect(url).toBe('https://api.github.com/gists/gist123');
     expect(opts.method).toBe('PATCH');
     expect(opts.body).toContain('Buy milk');
+  });
+});
+
+
+// jsdom does not implement media playback; the delete button plays a sound.
+beforeEach(() => {
+  window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+});
+
+function seedTask(overrides = {}) {
+  return { id: 't1', text: 'Buy milk', createdAt: Date.now(), completedAt: null, listId: 'todo', projectId: null, ...overrides };
+}
+
+// dnd-kit renders its own role="status" live region, so find the toast by class.
+const toast = () => document.querySelector('.undo-toast');
+
+describe('undo delete', () => {
+  it('shows a toast after deleting and Undo restores the task', () => {
+    localStorage.setItem('todo-app-tasks-personal', JSON.stringify([seedTask()]));
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Delete task'));
+    expect(screen.queryByText('Buy milk')).not.toBeInTheDocument();
+    expect(toast()).toHaveTextContent('Deleted “Buy milk”');
+    fireEvent.click(within(toast()).getByText('Undo'));
+    expect(screen.getByText('Buy milk')).toBeInTheDocument();
+    expect(toast()).toBeNull();
+    expect(JSON.parse(localStorage.getItem('todo-app-tasks-personal'))).toHaveLength(1);
+  });
+
+  it('dismisses the toast after 5s and the task stays deleted', () => {
+    vi.useFakeTimers();
+    localStorage.setItem('todo-app-tasks-personal', JSON.stringify([seedTask()]));
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Delete task'));
+    expect(toast()).not.toBeNull();
+    act(() => { vi.advanceTimersByTime(5000); });
+    expect(toast()).toBeNull();
+    expect(screen.queryByText('Buy milk')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('todo-app-tasks-personal'))).toHaveLength(0);
+  });
+
+  it('restores the task at its original position in storage', () => {
+    localStorage.setItem('todo-app-tasks-personal', JSON.stringify([
+      seedTask({ id: 'a', text: 'Alpha', createdAt: 3000 }),
+      seedTask({ id: 'b', text: 'Beta', createdAt: 2000 }),
+      seedTask({ id: 'c', text: 'Gamma', createdAt: 1000 }),
+    ]));
+    render(<App />);
+    // Todo is sorted newest first, so the rendered order matches storage order here.
+    fireEvent.click(screen.getAllByLabelText('Delete task')[1]); // Beta
+    expect(JSON.parse(localStorage.getItem('todo-app-tasks-personal')).map(t => t.id)).toEqual(['a', 'c']);
+    fireEvent.click(within(toast()).getByText('Undo'));
+    expect(JSON.parse(localStorage.getItem('todo-app-tasks-personal')).map(t => t.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('drops the pending undo when switching mode', () => {
+    localStorage.setItem('todo-app-tasks-personal', JSON.stringify([seedTask()]));
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Delete task'));
+    expect(toast()).not.toBeNull();
+    fireEvent.click(screen.getByText('Work'));
+    expect(toast()).toBeNull();
+  });
+});
+
+describe('sub-task and project consistency', () => {
+  it('reopens a completed project when one of its sub-tasks is unchecked', () => {
+    const done = Date.now();
+    localStorage.setItem('todo-app-projects-personal', JSON.stringify([
+      { id: 'p1', name: 'Garden', listId: 'completed', completedAt: done, createdAt: done - 1000 },
+    ]));
+    localStorage.setItem('todo-app-tasks-personal', JSON.stringify([
+      seedTask({ id: 's1', text: 'Buy seeds', projectId: 'p1', listId: undefined, completedAt: done }),
+    ]));
+    render(<App />);
+    const checkboxes = screen.getAllByRole('checkbox');
+    const projectBox = checkboxes[0]; // project header comes first
+    const subBox = checkboxes[1];
+    expect(projectBox).toBeChecked();
+    expect(subBox).toBeChecked();
+
+    fireEvent.click(subBox);
+
+    expect(screen.getByText('Buy seeds')).toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')[0]).not.toBeChecked();
+    const projects = JSON.parse(localStorage.getItem('todo-app-projects-personal'));
+    expect(projects[0].completedAt).toBeNull();
+    expect(projects[0].listId).toBe('todo');
   });
 });
