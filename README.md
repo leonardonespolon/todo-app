@@ -7,6 +7,7 @@ Supports personal/work modes, project organization, urgency indicators, and opti
 ## Features
 
 - Create, edit, complete, and reorder tasks via drag-and-drop
+- Undo a deleted task from a toast within five seconds
 - Organize tasks into projects (available in both Personal and Work modes)
 - Personal and Work modes with separate task and project lists
 - Urgency indicators (configurable warning/critical thresholds)

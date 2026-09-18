@@ -8,6 +8,7 @@ import TaskList from './components/TaskList';
 import './App.css';
 
 const DEFAULT_URGENCY = { warning: 24, critical: 48 };
+const UNDO_MS = 5000;
 
 const THEME_OPTIONS = [
   { id: 'light', label: 'Light', Icon: Sun },
@@ -42,7 +43,7 @@ function loadMode() {
 
 export default function App() {
   const [mode, setMode] = useState(loadMode);
-  const { tasks, addTask, addSubTask, editTask, deleteTask, deleteProjectTasks, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks(mode);
+  const { tasks, addTask, addSubTask, editTask, deleteTask, restoreTask, deleteProjectTasks, completeTask, uncompleteTask, moveTask, resetTasks } = useTasks(mode);
   const { projects, addProject, renameProject, moveProject, completeProject, uncompleteProject, deleteProject, resetProjects } = useProjects(mode);
   const { token, setToken, syncStatus, syncError, load, discoverGist, scheduleSave, flushSave } = useGistSync();
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -56,10 +57,12 @@ export default function App() {
   const [connecting, setConnecting] = useState(false);
   const [syncVisible, setSyncVisible] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [pendingUndo, setPendingUndo] = useState(null); // { task, index }
   const settingsRef = useRef(null);
   const themeRef = useRef(null);
   const syncTimerRef = useRef(null);
   const justLoadedRef = useRef(false);
+  const undoTimerRef = useRef(null);
 
   function toggleFocusMode() {
     setFocusMode(prev => {
@@ -69,8 +72,44 @@ export default function App() {
   }
 
   function switchMode(next) {
+    dismissUndo(); // the deleted task belongs to the mode we are leaving
     setMode(next);
     localStorage.setItem('todo-app-mode', next);
+  }
+
+  function dismissUndo() {
+    clearTimeout(undoTimerRef.current);
+    setPendingUndo(null);
+  }
+
+  // Delete immediately but keep the task around for a few seconds so the
+  // toast can put it back. A second delete replaces the first undo slot.
+  function handleDeleteTask(id) {
+    const index = tasks.findIndex(t => t.id === id);
+    if (index === -1) return;
+    const task = tasks[index];
+    deleteTask(id);
+    clearTimeout(undoTimerRef.current);
+    setPendingUndo({ task, index });
+    undoTimerRef.current = setTimeout(() => setPendingUndo(null), UNDO_MS);
+  }
+
+  function handleUndoDelete() {
+    if (!pendingUndo) return;
+    restoreTask(pendingUndo.task, pendingUndo.index);
+    dismissUndo();
+  }
+
+  useEffect(() => () => clearTimeout(undoTimerRef.current), []);
+
+  // Un-checking a sub-task of a completed project reopens the project, so a
+  // project is never shown as done while it has active work.
+  function handleUncompleteTask(id) {
+    uncompleteTask(id);
+    const task = tasks.find(t => t.id === id);
+    if (!task?.projectId) return;
+    const project = projects.find(p => p.id === task.projectId);
+    if (project && project.completedAt !== null) uncompleteProject(project.id);
   }
 
   useEffect(() => {
@@ -399,9 +438,9 @@ export default function App() {
         onAdd={addTask}
         onAddSubTask={addSubTask}
         onEdit={editTask}
-        onDelete={deleteTask}
+        onDelete={handleDeleteTask}
         onComplete={completeTask}
-        onUncomplete={uncompleteTask}
+        onUncomplete={handleUncompleteTask}
         onMove={moveTask}
         urgencySettings={urgencySettings}
         todayCount={todayCount}
@@ -412,6 +451,13 @@ export default function App() {
         onUncompleteProject={uncompleteProject}
         onDeleteProject={handleDeleteProject}
       />
+
+      {pendingUndo && (
+        <div className="undo-toast" role="status" aria-live="polite">
+          <span className="undo-toast-text">Deleted “{pendingUndo.task.text}”</span>
+          <button className="undo-toast-btn" onClick={handleUndoDelete}>Undo</button>
+        </div>
+      )}
     </div>
   );
 }

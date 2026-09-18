@@ -91,6 +91,18 @@ export function useTasks(mode) {
     setTasks(prev => prev.filter(t => t.id !== id));
   }
 
+  // Re-inserts a previously deleted task at its old position (used by Undo).
+  // No-op if a task with the same id is already present.
+  function restoreTask(task, index) {
+    setTasks(prev => {
+      if (prev.some(t => t.id === task.id)) return prev;
+      const next = [...prev];
+      const at = Math.min(Math.max(index ?? next.length, 0), next.length);
+      next.splice(at, 0, task);
+      return next;
+    });
+  }
+
   function deleteProjectTasks(projectId) {
     setTasks(prev => prev.filter(t => t.projectId !== projectId));
   }
@@ -117,6 +129,7 @@ export function useTasks(mode) {
     addSubTask,
     editTask,
     deleteTask,
+    restoreTask,
     deleteProjectTasks,
     completeTask,
     uncompleteTask,
