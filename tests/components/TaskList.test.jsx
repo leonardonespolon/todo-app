@@ -196,3 +196,93 @@ describe('project rename button', () => {
     expect(screen.getByDisplayValue('Garden')).toBeInTheDocument();
   });
 });
+
+describe('project collapse', () => {
+  const PROJECT_COLLAPSE_KEY = 'todo-app-project-collapse';
+
+  function makeProject(overrides = {}) {
+    return { id: 'p1', name: 'Garden', listId: 'todo', completedAt: null, createdAt: 1000, ...overrides };
+  }
+
+  function renderProjects(projects, tasks = []) {
+    return render(
+      <TaskList
+        tasks={tasks}
+        projects={projects}
+        onAdd={noop} onAddSubTask={noop} onEdit={noop} onDelete={noop}
+        onComplete={noop} onUncomplete={noop} onMove={noop}
+        urgencySettings={urgencySettings}
+        onAddProject={noop} onRenameProject={noop} onMoveProject={noop}
+        onCompleteProject={noop} onUncompleteProject={noop} onDeleteProject={noop}
+      />
+    );
+  }
+
+  const stored = () => JSON.parse(localStorage.getItem(PROJECT_COLLAPSE_KEY));
+
+  it('starts an active project expanded', () => {
+    renderProjects([makeProject()]);
+    expect(screen.getByPlaceholderText('Add sub-task...')).toBeInTheDocument();
+    expect(screen.getByLabelText('Collapse project')).toBeInTheDocument();
+  });
+
+  it('starts a completed project collapsed', () => {
+    const done = 5000;
+    const project = makeProject({ listId: 'completed', completedAt: done });
+    const sub = makeTask({ id: 's1', text: 'Buy seeds', projectId: 'p1', completedAt: done });
+    renderProjects([project], [sub]);
+    expect(screen.queryByText('Buy seeds')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Expand project')).toBeInTheDocument();
+  });
+
+  it('persists a collapse toggle to localStorage', () => {
+    renderProjects([makeProject()]);
+    fireEvent.click(screen.getByLabelText('Collapse project'));
+    expect(screen.queryByPlaceholderText('Add sub-task...')).not.toBeInTheDocument();
+    expect(stored()).toEqual({ p1: true });
+  });
+
+  it('restores a stored collapsed state on mount', () => {
+    localStorage.setItem(PROJECT_COLLAPSE_KEY, JSON.stringify({ p1: true }));
+    renderProjects([makeProject()]);
+    expect(screen.queryByPlaceholderText('Add sub-task...')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Expand project')).toBeInTheDocument();
+  });
+
+  it('respects an explicit expand on a completed project', () => {
+    const done = 5000;
+    localStorage.setItem(PROJECT_COLLAPSE_KEY, JSON.stringify({ p1: false }));
+    const project = makeProject({ listId: 'completed', completedAt: done });
+    const sub = makeTask({ id: 's1', text: 'Buy seeds', projectId: 'p1', completedAt: done });
+    renderProjects([project], [sub]);
+    expect(screen.getByText('Buy seeds')).toBeInTheDocument();
+  });
+
+  it('prunes entries for projects that no longer exist', () => {
+    localStorage.setItem(PROJECT_COLLAPSE_KEY, JSON.stringify({ p1: true, gone: true }));
+    renderProjects([makeProject()]);
+    expect(stored()).toEqual({ p1: true });
+  });
+
+  it('keeps stored entries when there are no projects to compare against', () => {
+    localStorage.setItem(PROJECT_COLLAPSE_KEY, JSON.stringify({ p1: true }));
+    renderProjects([]);
+    expect(stored()).toEqual({ p1: true });
+  });
+
+  it('keeps the collapse chevron outside the hover-fading controls group', () => {
+    // The edit/move/delete group fades in on hover; collapse must not, so it
+    // has to live outside .project-card-controls.
+    renderProjects([makeProject()]);
+    const chevron = screen.getByLabelText('Collapse project');
+    expect(chevron.closest('.project-card-controls')).toBeNull();
+    expect(chevron.closest('.project-card-actions')).not.toBeNull();
+    expect(screen.getByLabelText('Delete project').closest('.project-card-controls')).not.toBeNull();
+  });
+
+  it('ignores a corrupt stored value', () => {
+    localStorage.setItem(PROJECT_COLLAPSE_KEY, '{not json');
+    renderProjects([makeProject()]);
+    expect(screen.getByPlaceholderText('Add sub-task...')).toBeInTheDocument();
+  });
+});

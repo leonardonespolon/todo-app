@@ -851,6 +851,15 @@ body {
   color: var(--color-muted);
 }
 
+/* Wrapper so the collapse chevron stays visible while the edit/move/delete
+   group fades in on hover. */
+.project-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
 .project-card-controls {
   display: flex;
   align-items: center;

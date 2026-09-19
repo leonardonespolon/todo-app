@@ -42,10 +42,11 @@ function ProjectCard({
   onMove,
   onComplete,
   onUncomplete,
+  collapsed,
+  onToggleCollapse,
   urgencySettings,
   todayCount,
 }) {
-  const [collapsed, setCollapsed] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameText, setRenameText] = useState('');
   const [newSubTask, setNewSubTask] = useState('');
@@ -126,55 +127,57 @@ function ProjectCard({
         </div>
 
         {!renaming && (
-          <div className="project-card-controls">
-            {!isDone && (
-              <button
-                className="project-card-action"
-                onClick={startRename}
-                aria-label="Rename project"
-              >
-                <Pencil size={15} />
-              </button>
-            )}
-            {!isDone && (
-              <div ref={moveRef} style={{ position: 'relative' }}>
+          <div className="project-card-actions">
+            <div className="project-card-controls">
+              {!isDone && (
                 <button
                   className="project-card-action"
-                  onClick={() => setMoveOpen(o => !o)}
-                  aria-label="Move project"
+                  onClick={startRename}
+                  aria-label="Rename project"
                 >
-                  <ArrowRight size={15} />
+                  <Pencil size={15} />
                 </button>
-                {moveOpen && (
-                  <div className="move-dropdown move-dropdown--project" role="menu">
-                    {moveTargets.map(target => (
-                      <button
-                        key={target}
-                        className="move-dropdown-item"
-                        role="menuitem"
-                        onClick={() => { onMove(project.id, target); setMoveOpen(false); }}
-                      >
-                        Move to {SECTION_LABELS[target]}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            <button
-              className="project-card-action project-card-action--delete"
-              onClick={() => {
-                if (window.confirm(`Delete "${project.name}"? All its tasks will be removed.`)) {
-                  onDelete(project.id);
-                }
-              }}
-              aria-label="Delete project"
-            >
-              <Trash2 size={15} />
-            </button>
+              )}
+              {!isDone && (
+                <div ref={moveRef} style={{ position: 'relative' }}>
+                  <button
+                    className="project-card-action"
+                    onClick={() => setMoveOpen(o => !o)}
+                    aria-label="Move project"
+                  >
+                    <ArrowRight size={15} />
+                  </button>
+                  {moveOpen && (
+                    <div className="move-dropdown move-dropdown--project" role="menu">
+                      {moveTargets.map(target => (
+                        <button
+                          key={target}
+                          className="move-dropdown-item"
+                          role="menuitem"
+                          onClick={() => { onMove(project.id, target); setMoveOpen(false); }}
+                        >
+                          Move to {SECTION_LABELS[target]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <button
+                className="project-card-action project-card-action--delete"
+                onClick={() => {
+                  if (window.confirm(`Delete "${project.name}"? All its tasks will be removed.`)) {
+                    onDelete(project.id);
+                  }
+                }}
+                aria-label="Delete project"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
             <button
               className="section-collapse-btn"
-              onClick={() => setCollapsed(c => !c)}
+              onClick={onToggleCollapse}
               aria-label={collapsed ? 'Expand project' : 'Collapse project'}
             >
               {collapsed ? '▸' : '▾'}
@@ -260,6 +263,7 @@ function NewProjectRow({ onAdd }) {
 
 const URGENCY_RANK = { red: 2, yellow: 1, null: 0 };
 const COLLAPSE_KEY = 'todo-app-section-collapse';
+const PROJECT_COLLAPSE_KEY = 'todo-app-project-collapse';
 
 function loadCollapse() {
   try {
@@ -267,6 +271,23 @@ function loadCollapse() {
   } catch {
     return { watch: false, later: false, completed: false };
   }
+}
+
+// Map of project id -> collapsed. Only projects the user has toggled appear
+// here; everything else falls back to the default in isProjectCollapsed.
+function loadProjectCollapse() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PROJECT_COLLAPSE_KEY));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+// Completed projects start collapsed since their work is done; active ones
+// start open so the inline "Add sub-task" form is reachable in one click.
+function isProjectCollapsed(project, stored) {
+  return stored[project.id] ?? project.completedAt !== null;
 }
 
 function sortByUrgency(tasks, warningHours, criticalHours) {
@@ -311,10 +332,22 @@ export default function TaskList({
   );
   const [newText, setNewText] = useState('');
   const [collapse, setCollapse] = useState(loadCollapse);
+  const [projectCollapse, setProjectCollapse] = useState(loadProjectCollapse);
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_KEY, JSON.stringify(collapse));
   }, [collapse]);
+
+  useEffect(() => {
+    // Drop entries for projects that no longer exist, but never prune while the
+    // list is empty — a Gist load can clear it for a moment.
+    const toStore = projects.length
+      ? Object.fromEntries(
+          Object.entries(projectCollapse).filter(([id]) => projects.some(p => p.id === id))
+        )
+      : projectCollapse;
+    localStorage.setItem(PROJECT_COLLAPSE_KEY, JSON.stringify(toStore));
+  }, [projectCollapse, projects]);
 
   function handleAdd(e) {
     e.preventDefault();
@@ -409,10 +442,15 @@ export default function TaskList({
   }
 
   function renderProjectCard(project) {
+    const collapsed = isProjectCollapsed(project, projectCollapse);
     return (
       <ProjectCard
         key={project.id}
         project={project}
+        collapsed={collapsed}
+        onToggleCollapse={() =>
+          setProjectCollapse(prev => ({ ...prev, [project.id]: !collapsed }))
+        }
         subTasks={subTaskMap[project.id] ?? []}
         onAddSubTask={onAddSubTask}
         onEditTask={onEdit}

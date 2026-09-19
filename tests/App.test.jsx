@@ -133,6 +133,8 @@ describe('sub-task and project consistency', () => {
       seedTask({ id: 's1', text: 'Buy seeds', projectId: 'p1', listId: undefined, completedAt: done }),
     ]));
     render(<App />);
+    // Completed projects start collapsed, so open it to reach the sub-task.
+    fireEvent.click(screen.getByLabelText('Expand project'));
     const checkboxes = screen.getAllByRole('checkbox');
     const projectBox = checkboxes[0]; // project header comes first
     const subBox = checkboxes[1];
