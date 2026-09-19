@@ -8,7 +8,7 @@ Supports personal/work modes, project organization, urgency indicators, and opti
 
 - Create, edit, complete, and reorder tasks via drag-and-drop
 - Undo a deleted task from a toast within five seconds
-- Organize tasks into projects (available in both Personal and Work modes)
+- Organize tasks into projects (available in both Personal and Work modes), collapsible and remembered per project
 - Personal and Work modes with separate task and project lists
 - Urgency indicators (configurable warning/critical thresholds)
 - Today filter with daily streak tracking
@@ -54,5 +54,6 @@ All data is saved locally in `localStorage` with no backend required. Keys used:
 | `todo-app-theme` | Theme preference (`light`, `dark`, `retro`, or `system`) |
 | `todo-app-focus` | Focus mode on/off |
 | `todo-app-section-collapse` | Collapsed state of the Watch/Later/Completed sections |
+| `todo-app-project-collapse` | Collapsed state of individual project cards |
 | `todo-gist-token` | GitHub token for Gist sync (stored in plain text in the browser) |
 | `todo-gist-id` | ID of the gist holding the synced data |
